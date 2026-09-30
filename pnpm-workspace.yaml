@@ -1,2 +1,9 @@
 overrides:
   miniflare>sharp: 0.35.4
+allowBuilds:
+  core-js: false
+  esbuild: true
+  unrs-resolver: true
+  workerd: true
+  sharp: true
+  fsevents: true
