@@ -4,7 +4,7 @@ type FinanceData = { entries: Entry[]; history: Entry[]; allLoans: Entry[]; bill
 type Stored = { entries: Entry[]; bills: Bill[]; goals: Goal[]; groupSplits: GroupSplit[]; budgets: Record<string, number> };
 const empty = (): Stored => ({ entries: [], bills: [], goals: [], groupSplits: [], budgets: {} });
 
-declare global { interface Window { EVENFOLD_CONFIG?: { url: string; key: string }; EVENFOLD_TOKEN?: string } }
+declare global { interface Window { EVENFOLD_CONFIG?: { url: string; key: string }; EVENFOLD_TOKEN?: string; EVENFOLD_PRIVACY_CONTACT?: string } }
 function config() { return typeof window !== "undefined" ? window.EVENFOLD_CONFIG : undefined; }
 function amount(value: unknown, zero = false) {
   const n = Number(value);
