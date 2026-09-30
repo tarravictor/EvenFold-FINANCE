@@ -10,6 +10,7 @@ const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
 const privacyContact = import.meta.env.VITE_PRIVACY_CONTACT as string | undefined;
 const hasPrivacyContact = Boolean(privacyContact && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(privacyContact));
+const authRedirectUrl = typeof window !== "undefined" ? new URL(import.meta.env.BASE_URL || "/", window.location.origin).toString() : "";
 if (url && key) window.EVENFOLD_CONFIG = { url: url.replace(/\/$/, ""), key };
 if (hasPrivacyContact) window.EVENFOLD_PRIVACY_CONTACT = privacyContact;
 type Session = { access_token: string; refresh_token: string; expires_at?: number; expires_in?: number; user?: { email?: string } };
@@ -31,6 +32,17 @@ function App() {
   useEffect(() => {
     let active = true;
     async function restore() {
+      const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+      const hashError = hash.get("error_description") || hash.get("error");
+      const hashSession = hash.get("access_token") && hash.get("refresh_token") ? {
+        access_token: hash.get("access_token") || "",
+        refresh_token: hash.get("refresh_token") || "",
+        expires_at: Number(hash.get("expires_at")) || Math.floor(Date.now() / 1000) + Number(hash.get("expires_in") || 3600),
+        expires_in: Number(hash.get("expires_in")) || undefined,
+      } : null;
+      if (window.location.hash) window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+      if (hashError) { setMessage(hashError); setChecking(false); return; }
+      if (hashSession) { save(hashSession); setChecking(false); return; }
       const old = read(); if (!old) { setChecking(false); return; }
       try { const next = old.expires_at && Date.now() / 1000 < old.expires_at - 60 ? old : await auth("token?grant_type=refresh_token", { refresh_token: old.refresh_token }); if (active) save({ ...next, expires_at: next.expires_at || Math.floor(Date.now()/1000) + (next.expires_in || 3600) }); }
       catch { if (active) save(null); }
@@ -49,7 +61,7 @@ function App() {
     try {
       if (mode === "register") {
         if (password.length < 8) throw new Error("Use at least 8 characters for your password.");
-        const result = await auth("signup", { email, password });
+        const result = await auth(`signup?redirect_to=${encodeURIComponent(authRedirectUrl)}`, { email, password });
         if (result.access_token) save({ ...result, expires_at: result.expires_at || Math.floor(Date.now()/1000)+(result.expires_in || 3600) });
         else setMessage("Check your email to confirm your account, then sign in.");
       } else { const result = await auth("token?grant_type=password", { email, password }); save({ ...result, expires_at: result.expires_at || Math.floor(Date.now()/1000)+(result.expires_in || 3600) }); }
