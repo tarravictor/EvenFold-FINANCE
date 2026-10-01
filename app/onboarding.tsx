@@ -15,14 +15,17 @@ export function Onboarding({ open, onClose }: { open: boolean; onClose: () => vo
   useEffect(() => { if (open) setIndex(0); }, [open]);
   useEffect(() => {
     if (!open) return;
+    const selector = index === 3 ? (innerWidth < 871 ? ".bottom-nav" : ".side-nav") : steps[index].selector;
+    const target = document.querySelector(selector);
+    target?.scrollIntoView({ block: "center", inline: "center", behavior: "smooth" });
     const update = () => {
-      const selector = index === 3 ? (innerWidth < 871 ? ".bottom-nav" : ".side-nav") : steps[index].selector;
       setRect(document.querySelector(selector)?.getBoundingClientRect() ?? null);
     };
+    const timer = window.setTimeout(update, 260);
     update(); window.addEventListener("resize", update); window.addEventListener("scroll", update, true);
     const escape = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
     window.addEventListener("keydown", escape);
-    return () => { window.removeEventListener("resize", update); window.removeEventListener("scroll", update, true); window.removeEventListener("keydown", escape); };
+    return () => { window.clearTimeout(timer); window.removeEventListener("resize", update); window.removeEventListener("scroll", update, true); window.removeEventListener("keydown", escape); };
   }, [open, index, onClose]);
   if (!open) return null;
   const top = rect && rect.bottom + 16 < innerHeight - 220 ? rect.bottom + 16 : Math.max(18, (rect?.top ?? 0) - 215);
