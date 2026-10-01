@@ -57,15 +57,16 @@ async function updateAccount(token: string, body: Record<string, unknown>) {
   return result.user;
 }
 
-async function deleteFinanceState(token: string) {
+async function deleteAccount(token: string) {
   if (!url || !key) throw new Error("Supabase connection is not configured yet.");
-  const response = await fetch(`${url.replace(/\/$/, "")}/rest/v1/finance_state`, {
-    method: "DELETE",
-    headers: { apikey: key, Authorization: `Bearer ${token}`, Prefer: "return=minimal" },
+  const response = await fetch(`${url.replace(/\/$/, "")}/functions/v1/delete-account`, {
+    method: "POST",
+    headers: { apikey: key, Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ confirm: "DELETE" }),
   });
   if (!response.ok) {
-    const result = await response.json().catch(() => ({})) as { message?: string };
-    throw new Error(result.message || "Could not delete your finance data.");
+    const result = await response.json().catch(() => ({})) as { error?: string; message?: string };
+    throw new Error(result.error || result.message || "Could not delete your account.");
   }
 }
 
@@ -208,15 +209,15 @@ function App() {
     }
   }
 
-  async function deleteDataAndSignOut() {
+  async function deleteUserAccount() {
     if (!session) return;
     setAccountBusy("delete");
     setAccountMessage("");
     try {
-      await deleteFinanceState(session.access_token);
-      await signOut();
+      await deleteAccount(session.access_token);
+      save(null);
     } catch (cause) {
-      setAccountMessage(cause instanceof Error ? cause.message : "Could not delete your finance data.");
+      setAccountMessage(cause instanceof Error ? cause.message : "Could not delete your account.");
       setAccountBusy(null);
     }
   }
@@ -225,7 +226,7 @@ function App() {
   if (session) return <>
     <div className="account-bar"><span>{name}</span><button onClick={() => setAccountOpen(true)}>Account</button><button onClick={() => void signOut()}>Sign out</button></div>
     <Home accountName={name} accountEmail={session.user?.email}/>
-    <Dialog open={accountOpen} onOpenChange={setAccountOpen}><DialogContent className="account-dialog"><DialogHeader><DialogTitle>Account settings</DialogTitle><DialogDescription>Edit your profile, update your password, or clear the finance data saved to this account.</DialogDescription></DialogHeader>
+    <Dialog open={accountOpen} onOpenChange={setAccountOpen}><DialogContent className="account-dialog"><DialogHeader><DialogTitle>Account settings</DialogTitle><DialogDescription>Edit your profile, update your password, or delete your account.</DialogDescription></DialogHeader>
       <form className="form-grid account-section" onSubmit={event => void saveProfile(event)}>
         <h3>Edit information</h3>
         <label>Display name<input required maxLength={80} value={profileName} onChange={event => setProfileName(event.target.value)} placeholder="Your name"/></label>
@@ -238,10 +239,10 @@ function App() {
         <button className="outline-button submit-button" disabled={!!accountBusy || !newPassword}>{accountBusy === "password" ? "Updating..." : "Update password"}</button>
       </form>
       <div className="account-section danger-zone">
-        <h3>Delete account data</h3>
-        <p>Supabase Auth account deletion needs a protected backend. This button deletes the finance records linked to your current account and signs you out.</p>
+        <h3>Delete account</h3>
+        <p>This permanently deletes your EvenFold account and the finance data linked to it. This cannot be undone.</p>
         <label>Type DELETE to continue<input value={deleteConfirm} onChange={event => setDeleteConfirm(event.target.value)} placeholder="DELETE"/></label>
-        <button className="danger-button" disabled={!!accountBusy || deleteConfirm !== "DELETE"} onClick={() => void deleteDataAndSignOut()}>{accountBusy === "delete" ? "Deleting..." : "Delete finance data & sign out"}</button>
+        <button className="danger-button" disabled={!!accountBusy || deleteConfirm !== "DELETE"} onClick={() => void deleteUserAccount()}>{accountBusy === "delete" ? "Deleting..." : "Delete account"}</button>
       </div>
       {accountMessage && <p className="auth-message" role="status">{accountMessage}</p>}
     </DialogContent></Dialog>
