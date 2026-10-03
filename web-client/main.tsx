@@ -4,6 +4,15 @@ import Home from "../app/page";
 import { LegalDialog, LegalTopic } from "../app/legal";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import "../app/globals.css";
+import "../app/experience.css";
+import { offlineStore } from "../app/offline-store";
+import { preference } from "../app/device-settings";
+
+document.documentElement.dataset.theme = preference("theme", "light");
+window.addEventListener("beforeinstallprompt", event => { event.preventDefault(); (window as Window & { evenfoldInstall?: Event }).evenfoldInstall = event; });
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
+  window.addEventListener("load", () => { void navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch(() => {}); });
+}
 
 document.body.classList.add("pages-mode");
 
@@ -52,9 +61,9 @@ async function updateAccount(token: string, body: Record<string, unknown>) {
     headers: { apikey: key, Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  const result = await response.json() as { user?: SessionUser; msg?: string; error_description?: string; message?: string };
+  const result = await response.json() as SessionUser & { user?: SessionUser; msg?: string; error_description?: string; message?: string };
   if (!response.ok) throw new Error(result.msg || result.error_description || result.message || "Account update failed.");
-  return result.user;
+  return result.user || (result.id ? result : undefined);
 }
 
 async function deleteAccount(token: string) {
@@ -90,8 +99,11 @@ function App() {
   const name = useMemo(() => displayName(session?.user), [session]);
 
   function save(value: Session | null) {
+    const previousOwner = window.EVENFOLD_USER;
+    if (!value && previousOwner) void offlineStore(previousOwner, undefined, true).catch(() => {});
     setSession(value);
     window.EVENFOLD_TOKEN = value?.access_token;
+    window.EVENFOLD_USER = value?.user?.id;
     if (value) localStorage.setItem(storageKey, JSON.stringify(value));
     else localStorage.removeItem(storageKey);
   }
@@ -119,9 +131,18 @@ function App() {
       } : null;
       if (window.location.hash) window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
       if (hashError) { setMessage(hashError); setChecking(false); return; }
-      if (hashSession) { save(hashSession); setChecking(false); return; }
+      if (hashSession) {
+        try {
+          const response = await fetch(`${url}/auth/v1/user`, { headers: { apikey: key || "", Authorization: `Bearer ${hashSession.access_token}` } });
+          if (!response.ok) throw new Error("Verification session expired. Please sign in again.");
+          const user = await response.json() as SessionUser;
+          if (active) save({ ...hashSession, user });
+        } catch (error) { setMessage(error instanceof Error ? error.message : "Please sign in again."); }
+        setChecking(false); return;
+      }
       const old = read();
       if (!old) { setChecking(false); return; }
+      if (!navigator.onLine) { save(old); setChecking(false); return; }
       try {
         const next = old.expires_at && Date.now() / 1000 < old.expires_at - 60 ? old : await auth("token?grant_type=refresh_token", { refresh_token: old.refresh_token });
         if (active) save({ ...old, ...next, user: next.user || old.user, expires_at: expiry(next) });
@@ -138,6 +159,7 @@ function App() {
     if (!session) return;
     const time = Math.max(1000, ((session.expires_at || 0) * 1000) - Date.now() - 60000);
     const timer = setTimeout(async () => {
+      if (!navigator.onLine) return;
       try {
         const next = await auth("token?grant_type=refresh_token", { refresh_token: session.refresh_token });
         save({ ...session, ...next, user: next.user || session.user, expires_at: expiry(next) });
@@ -147,6 +169,15 @@ function App() {
     }, time);
     return () => clearTimeout(timer);
   }, [session]);
+  useEffect(() => {
+    const refresh = async () => {
+      const old = read(); if (!old) return;
+      try { const next = await auth("token?grant_type=refresh_token", { refresh_token: old.refresh_token }); save({ ...old, ...next, expires_at: expiry(next) }); }
+      catch { setMessage("Session refresh failed. Sign in again when connected."); }
+    };
+    window.addEventListener("online", refresh);
+    return () => window.removeEventListener("online", refresh);
+  }, []);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -224,8 +255,7 @@ function App() {
 
   if (checking) return <main className="auth-page"><div className="auth-card">Loading your account...</div></main>;
   if (session) return <>
-    <div className="account-bar"><span>{name}</span><button onClick={() => setAccountOpen(true)}>Account</button><button onClick={() => void signOut()}>Sign out</button></div>
-    <Home accountName={name} accountEmail={session.user?.email}/>
+    <Home key={session.user?.id || "session"} accountName={name} accountEmail={session.user?.email} onAccount={() => setAccountOpen(true)} onSignOut={() => void signOut()}/>
     <Dialog open={accountOpen} onOpenChange={setAccountOpen}><DialogContent className="account-dialog"><DialogHeader><DialogTitle>Account settings</DialogTitle><DialogDescription>Edit your profile, update your password, or delete your account.</DialogDescription></DialogHeader>
       <form className="form-grid account-section" onSubmit={event => void saveProfile(event)}>
         <h3>Edit information</h3>

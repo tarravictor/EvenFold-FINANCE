@@ -1,11 +1,14 @@
 import { addDays, Bill, Entry, Goal, GroupSplit } from "./finance-utils";
 import { backupSchema, type BackupData } from "./backup";
+import { emptyPlanner, type Planner, recurringSchema, debtSchema, nextOccurrence } from "./planner-model";
+import { offlineStore } from "./offline-store";
+import { offlinePreference } from "./device-settings";
 
-type FinanceData = { entries: Entry[]; history: Entry[]; allLoans: Entry[]; bills: Bill[]; goals: Goal[]; groupSplits: GroupSplit[]; monthStart: string; budgetCents: number | null };
-type Stored = { entries: Entry[]; bills: Bill[]; goals: Goal[]; groupSplits: GroupSplit[]; budgets: Record<string, number> };
-const empty = (): Stored => ({ entries: [], bills: [], goals: [], groupSplits: [], budgets: {} });
+type FinanceData = { entries: Entry[]; history: Entry[]; allLoans: Entry[]; bills: Bill[]; goals: Goal[]; groupSplits: GroupSplit[]; monthStart: string; budgetCents: number | null; planner: Planner };
+type Stored = BackupData;
+const empty = (): Stored => ({ entries: [], bills: [], goals: [], groupSplits: [], budgets: {}, ...emptyPlanner() });
 
-declare global { interface Window { EVENFOLD_CONFIG?: { url: string; key: string }; EVENFOLD_TOKEN?: string; EVENFOLD_PRIVACY_CONTACT?: string } }
+declare global { interface Window { EVENFOLD_CONFIG?: { url: string; key: string }; EVENFOLD_TOKEN?: string; EVENFOLD_PRIVACY_CONTACT?: string; EVENFOLD_USER?: string } }
 function config() { return typeof window !== "undefined" ? window.EVENFOLD_CONFIG : undefined; }
 function amount(value: unknown, zero = false) {
   const n = Number(value);
@@ -21,11 +24,70 @@ function asDate(value: unknown) {
   return value;
 }
 function id(value: unknown) { if (typeof value !== "string" || !/^[a-f0-9-]{36}$/.test(value)) throw new Error("Invalid record."); return value; }
+function entryAmount(s: Stored, p: Record<string, unknown>) {
+  const source = amount(p.amount);
+  if (!p.currency || p.currency === "PHP") return { amountCents: source, source: undefined };
+  if (typeof p.currency !== "string" || !["USD", "EUR", "JPY", "SGD", "AUD"].includes(p.currency)) throw new Error("Unsupported currency.");
+  const rate = s.exchangeRates[p.currency as keyof Planner["exchangeRates"]];
+  if (!rate) throw new Error(`Set the PHP exchange rate for ${p.currency} in Settings first.`);
+  const converted = Math.round(source * rate);
+  if (converted < 1 || converted > 1000000000) throw new Error("Converted amount exceeds the supported range.");
+  return { amountCents: converted, source: { currency: p.currency as "USD" | "EUR" | "JPY" | "SGD" | "AUD", amountCents: source, rate } };
+}
 function mutate(s: Stored, p: Record<string, unknown>) {
   switch (p.action) {
+    case "category_add": {
+      const name = label(p.name, "category");
+      if (s.customCategories.length >= 50 || [...s.customCategories, "Food", "Coffee", "Groceries", "Transport", "School", "Bills", "Other"].some(x => x.toLocaleLowerCase() === name.toLocaleLowerCase())) throw new Error("Choose a unique category (maximum 50 custom categories).");
+      s.customCategories.push(name); break;
+    }
+    case "category_delete": {
+      const name = label(p.name, "category");
+      if (s.entries.some(x => x.category === name) || s.recurring.some(x => x.category === name) || Object.values(s.categoryBudgets).some(row => row[name] !== undefined)) throw new Error("This category is in use. Move or remove its records first.");
+      s.customCategories = s.customCategories.filter(x => x !== name); break;
+    }
+    case "rate_save": {
+      const code = String(p.currency);
+      if (!["USD", "EUR", "JPY", "SGD", "AUD"].includes(code) || !Number.isFinite(Number(p.rate)) || Number(p.rate) <= 0 || Number(p.rate) > 100000) throw new Error("Enter a valid PHP exchange rate.");
+      s.exchangeRates[code as keyof Planner["exchangeRates"]] = Number(p.rate); break;
+    }
+    case "import_entries": {
+      if (!Array.isArray(p.entries) || p.entries.length > 5000) throw new Error("Import up to 5,000 rows.");
+      const checked = backupSchema.parse({ ...empty(), entries: p.entries }).entries;
+      const fingerprint = (e: Entry) => JSON.stringify([e.date, e.kind, e.description, e.category, e.borrower, e.amountCents, e.settled]);
+      const seen = new Set(s.entries.map(fingerprint));
+      for (const entry of checked) { const key = fingerprint(entry); if (!seen.has(key)) { s.entries.push({ ...entry, id: crypto.randomUUID() }); seen.add(key); } }
+      break;
+    }
+    case "category_budget": {
+      const month = String(p.month); if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) throw new Error("Choose a month.");
+      const category = label(p.category, "category");
+      s.categoryBudgets[month] = { ...s.categoryBudgets[month], [category]: amount(p.amount, true) }; break;
+    }
+    case "recurring_save": {
+      const item = recurringSchema.parse({ id: p.id || crypto.randomUUID(), name: p.name, category: p.category, amountCents: amount(p.amount), nextDate: p.nextDate, frequency: p.frequency, active: true });
+      s.recurring = [...s.recurring.filter(x => x.id !== item.id), item]; break;
+    }
+    case "recurring_delete": s.recurring = s.recurring.filter(x => x.id !== id(p.id)); break;
+    case "recurring_post": {
+      const item = s.recurring.find(x => x.id === id(p.id)); if (!item) throw new Error("Schedule not found.");
+      if (item.nextDate !== p.expectedDate) throw new Error("This occurrence was already recorded. Refresh your list.");
+      s.entries.push({ id: crypto.randomUUID(), date: item.nextDate, kind: "expense", description: item.name, category: item.category, borrower: null, amountCents: item.amountCents, settled: 0 });
+      item.nextDate = nextOccurrence(item.nextDate, item.frequency); break;
+    }
+    case "debt_save": {
+      const item = debtSchema.parse({ id: p.id || crypto.randomUUID(), name: p.name, balanceCents: amount(p.balance, true), apr: Number(p.apr), minimumCents: amount(p.minimum, true) });
+      s.debts = [...s.debts.filter(x => x.id !== item.id), item]; break;
+    }
+    case "debt_delete": s.debts = s.debts.filter(x => x.id !== id(p.id)); break;
+    case "journal_add": {
+      if (typeof p.note !== "string" || !p.note.trim() || p.note.length > 1000) throw new Error("Use 1 to 1,000 characters.");
+      s.journal.unshift({ id: crypto.randomUUID(), date: asDate(p.date), note: p.note.trim() }); break;
+    }
+    case "journal_delete": s.journal = s.journal.filter(x => x.id !== id(p.id)); break;
     case "budget": { const week = asDate(p.weekStart); if (new Date(`${week}T12:00:00Z`).getUTCDay() !== 2) throw new Error("Choose a valid week."); s.budgets[week] = amount(p.amount, true); break; }
-    case "add": { const week = asDate(p.weekStart), date = asDate(p.date); if (new Date(`${week}T12:00:00Z`).getUTCDay() !== 2 || date < week || date >= addDays(week, 5)) throw new Error("Choose a date in this week."); if (p.kind !== "expense" && p.kind !== "loan") throw new Error("Choose an entry type."); s.entries.unshift({ id: crypto.randomUUID(), date, kind: p.kind, description: label(p.description, "description"), category: p.kind === "loan" ? "Lent money" : label(p.category, "category"), borrower: p.kind === "loan" ? label(p.borrower, "borrower") : null, amountCents: amount(p.amount), settled: 0 }); break; }
-    case "edit": { const entry = s.entries.find(e => e.id === id(p.id)); if (!entry) throw new Error("Invalid entry."); const date = asDate(p.date); if (p.kind !== "expense" && p.kind !== "loan") throw new Error("Choose an entry type."); entry.date = date; entry.kind = p.kind; entry.description = label(p.description, "description"); entry.amountCents = amount(p.amount); entry.category = p.kind === "loan" ? "Lent money" : label(p.category, "category"); entry.borrower = p.kind === "loan" ? label(p.borrower, "borrower") : null; break; }
+    case "add": { const week = asDate(p.weekStart), date = asDate(p.date); if (new Date(`${week}T12:00:00Z`).getUTCDay() !== 2 || date < week || date >= addDays(week, 5)) throw new Error("Choose a date in this week."); if (p.kind !== "expense" && p.kind !== "loan") throw new Error("Choose an entry type."); s.entries.unshift({ id: crypto.randomUUID(), date, kind: p.kind, description: label(p.description, "description"), category: p.kind === "loan" ? "Lent money" : label(p.category, "category"), borrower: p.kind === "loan" ? label(p.borrower, "borrower") : null, ...entryAmount(s,p), settled: 0 }); break; }
+    case "edit": { const entry = s.entries.find(e => e.id === id(p.id)); if (!entry) throw new Error("Invalid entry."); const date = asDate(p.date); if (p.kind !== "expense" && p.kind !== "loan") throw new Error("Choose an entry type."); entry.date = date; entry.kind = p.kind; entry.description = label(p.description, "description"); Object.assign(entry, entryAmount(s,p)); entry.category = p.kind === "loan" ? "Lent money" : label(p.category, "category"); entry.borrower = p.kind === "loan" ? label(p.borrower, "borrower") : null; break; }
     case "delete": s.entries = s.entries.filter(e => e.id !== id(p.id)); break;
     case "settle": { const e = s.entries.find(e => e.id === id(p.id) && e.kind === "loan"); if (!e) throw new Error("Invalid loan."); e.settled = e.settled ? 0 : 1; break; }
     case "add_split": { const date = asDate(p.date), title = label(p.title, "bill name"), totalCents = amount(p.total); if (!Array.isArray(p.people) || p.people.length < 1 || p.people.length > 19) throw new Error("Choose 2 to 20 people."); const names = ["You", ...p.people.map(x => label(x, "person's name"))]; if (new Set(names.map(x => x.toLocaleLowerCase())).size !== names.length || typeof p.payer !== "string" || !names.includes(p.payer)) throw new Error("Choose unique names and a payer."); const splitId = crypto.randomUUID(), base = Math.floor(totalCents / names.length), rest = totalCents % names.length; s.groupSplits.unshift({ id: splitId, title, date, totalCents, payer: p.payer, shares: names.map((name, i) => ({ id: crypto.randomUUID(), splitId, name, amountCents: base + (i < rest ? 1 : 0), paid: name === p.payer ? 1 : 0 })) }); break; }
@@ -41,14 +103,24 @@ function mutate(s: Stored, p: Record<string, unknown>) {
   }
 }
 async function request(path: string, method = "GET", body?: unknown) {
+  if (!navigator.onLine) throw new Error("Reconnect to save changes. Offline changes are not queued.");
   const c = config(); if (!c || !window.EVENFOLD_TOKEN) throw new Error("Sign in to access your tracker.");
   const response = await fetch(`${c.url}/rest/v1/${path}`, { method, headers: { apikey: c.key, Authorization: `Bearer ${window.EVENFOLD_TOKEN}`, "Content-Type": "application/json", Prefer: method === "GET" ? "" : "return=representation" }, body: body === undefined ? undefined : JSON.stringify(body) });
   if (!response.ok) { const error = await response.json().catch(() => ({})) as { message?: string }; throw new Error(error.message || "Could not save your data."); }
   return response.json() as Promise<any>;
 }
 async function state() {
+  if (!navigator.onLine) {
+    if (offlinePreference() && window.EVENFOLD_USER) {
+      const saved = await offlineStore<{ data: Stored; version: number }>(window.EVENFOLD_USER);
+      if (saved) return { ...saved, data: backupSchema.parse(saved.data) };
+    }
+    throw new Error("No offline snapshot available. Reconnect to load your records.");
+  }
   const rows = await request("finance_state?select=data,version&limit=1") as { data: Stored; version: number }[];
-  return rows[0] ?? { data: empty(), version: -1 };
+  const snapshot = rows[0] ? { ...rows[0], data: backupSchema.parse(rows[0].data) } : { data: empty(), version: -1 };
+  if (offlinePreference() && window.EVENFOLD_USER) await offlineStore(window.EVENFOLD_USER, snapshot).catch(() => {});
+  return snapshot;
 }
 export async function readBackupState() { return state(); }
 export async function restoreBackup(data: BackupData, expectedVersion: number) {
@@ -62,12 +134,13 @@ export async function loadFinance(weekStart: string): Promise<FinanceData> {
   if (!config()) { const r = await fetch(`/api/finance?weekStart=${encodeURIComponent(weekStart)}`, { cache: "no-store" }); const d = await r.json() as FinanceData & { error?: string }; if (!r.ok) throw new Error(d.error || "Could not load your data."); return d; }
   const s = (await state()).data;
   const monthStart = `${weekStart.slice(0, 7)}-01`, start = `${new Date(Date.UTC(Number(monthStart.slice(0,4)), Number(monthStart.slice(5,7))-6, 1)).toISOString().slice(0,10)}`;
-  return { entries: s.entries.filter(e => e.date >= weekStart && e.date < addDays(weekStart, 5)).sort((a,b) => b.date.localeCompare(a.date)), history: s.entries.filter(e => e.date >= start && e.date < addDays(`${weekStart.slice(0,7)}-01`, 35)), allLoans: s.entries.filter(e => e.kind === "loan"), bills: [...s.bills].sort((a,b) => a.dueDate.localeCompare(b.dueDate)), goals: [...s.goals].sort((a,b) => a.name.localeCompare(b.name)), groupSplits: [...s.groupSplits].sort((a,b) => b.date.localeCompare(a.date)), monthStart, budgetCents: s.budgets[weekStart] ?? null };
+  return { planner: { customCategories: s.customCategories, exchangeRates: s.exchangeRates, categoryBudgets: s.categoryBudgets, recurring: s.recurring, debts: s.debts, journal: s.journal }, entries: s.entries.filter(e => e.date >= weekStart && e.date < addDays(weekStart, 5)).sort((a,b) => b.date.localeCompare(a.date)), history: s.entries, allLoans: s.entries.filter(e => e.kind === "loan"), bills: [...s.bills].sort((a,b) => a.dueDate.localeCompare(b.dueDate)), goals: [...s.goals].sort((a,b) => a.name.localeCompare(b.name)), groupSplits: [...s.groupSplits].sort((a,b) => b.date.localeCompare(a.date)), monthStart, budgetCents: s.budgets[weekStart] ?? null };
 }
 export async function saveFinance(payload: Record<string, unknown>): Promise<void> {
+  if (!navigator.onLine) throw new Error("Reconnect before saving. Offline changes are not queued.");
   if (!config()) { const r = await fetch("/api/finance", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); const d = await r.json() as { error?: string }; if (!r.ok) throw new Error(d.error || "Could not save."); return; }
   for (let attempt = 0; attempt < 3; attempt++) {
-    const old = await state(); const copy = structuredClone(old.data); mutate(copy, payload);
+    const old = await state(); const copy = structuredClone(old.data); mutate(copy, payload); backupSchema.parse(copy);
     if (old.version === -1) {
       const rows = await request("finance_state?on_conflict=owner&select=version", "POST", { data: copy, version: 0 });
       if (rows.length) return;

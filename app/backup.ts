@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { plannerShape } from "./planner-model";
 
 const text = z.string().trim().min(1).max(100);
 const id = z.string().uuid();
@@ -8,12 +9,12 @@ const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(value => {
 });
 const cents = z.number().int().min(0).max(1000000000);
 const flag = z.union([z.literal(0), z.literal(1)]);
-const entry = z.object({ id, date, kind: z.enum(["expense", "loan", "income"]), description: text, category: text, borrower: text.nullable(), amountCents: cents, settled: flag }).strict();
+const entry = z.object({ id, date, kind: z.enum(["expense", "loan", "income"]), description: text, category: text, borrower: text.nullable(), amountCents: cents, settled: flag, source: z.object({ currency: z.enum(["USD", "EUR", "JPY", "SGD", "AUD"]), amountCents: cents, rate: z.number().positive().max(100000) }).strict().optional() }).strict();
 const bill = z.object({ id, name: text, amountCents: cents, dueDate: date, paid: flag }).strict();
 const goal = z.object({ id, name: text, targetCents: cents.refine(n => n > 0), savedCents: cents }).strict();
 const share = z.object({ id, splitId: id, name: text, amountCents: cents, paid: flag }).strict();
 const split = z.object({ id, date, title: text, totalCents: cents, payer: text, shares: z.array(share).min(2).max(20) }).strict().refine(s => s.shares.every(x => x.splitId === s.id) && s.shares.some(x => x.name === s.payer) && s.shares.reduce((n, x) => n + x.amountCents, 0) === s.totalCents && new Set(s.shares.map(x => x.name.toLowerCase())).size === s.shares.length, "Invalid split totals or participants");
-export const backupSchema = z.object({ entries: z.array(entry).max(20000), bills: z.array(bill).max(5000), goals: z.array(goal).max(5000), groupSplits: z.array(split).max(5000), budgets: z.record(date.refine(d => new Date(`${d}T12:00:00Z`).getUTCDay() === 2), cents) }).strict().refine(s => {
+export const backupSchema = z.object({ ...plannerShape, entries: z.array(entry).max(20000), bills: z.array(bill).max(5000), goals: z.array(goal).max(5000), groupSplits: z.array(split).max(5000), budgets: z.record(date.refine(d => new Date(`${d}T12:00:00Z`).getUTCDay() === 2), cents) }).strict().refine(s => {
   const ids = [...s.entries, ...s.bills, ...s.goals, ...s.groupSplits, ...s.groupSplits.flatMap(x => x.shares)].map(x => x.id);
   return new Set(ids).size === ids.length;
 }, "Duplicate record identifiers");

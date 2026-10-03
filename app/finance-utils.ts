@@ -1,4 +1,4 @@
-export type Entry = { id: string; date: string; kind: "expense" | "loan" | "income"; description: string; category: string; borrower: string | null; amountCents: number; settled: number };
+export type Entry = { id: string; date: string; kind: "expense" | "loan" | "income"; description: string; category: string; borrower: string | null; amountCents: number; settled: number; source?: { currency: "USD" | "EUR" | "JPY" | "SGD" | "AUD"; amountCents: number; rate: number } };
 export type GroupShare = { id: string; splitId: string; name: string; amountCents: number; paid: number };
 export type GroupSplit = { id: string; date: string; title: string; totalCents: number; payer: string; shares: GroupShare[] };
 export type Bill = { id: string; name: string; amountCents: number; dueDate: string; paid: number };

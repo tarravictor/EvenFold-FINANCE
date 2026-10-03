@@ -9,6 +9,7 @@ create table if not exists public.finance_state (
 create index if not exists finance_state_updated_at_idx on public.finance_state (updated_at);
 alter table public.finance_state enable row level security;
 revoke all on public.finance_state from anon;
+revoke truncate, references, trigger on public.finance_state from authenticated;
 grant select, insert, update, delete on public.finance_state to authenticated;
 create policy "read own finance" on public.finance_state for select to authenticated using ((select auth.uid()) = owner);
 create policy "create own finance" on public.finance_state for insert to authenticated with check ((select auth.uid()) = owner);

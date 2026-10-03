@@ -1,36 +1,27 @@
-# EvenFold upgrade, October 3, 2026
+# EvenFold Finance upgrade audit, October 3, 2026
 
-## Architecture decision
-Keep Supabase authentication and cloud finance records. No income UI. GitHub Pages remains the static host. Do not claim that data stays exclusively on a device. No banking credentials or account linking are introduced.
+## Architecture
+GitHub Pages hosts the static app. Supabase Auth and a row of JSONB per user store cloud records; Row Level Security restricts each owner. All amounts are PHP. Income remains removed from the UI. No bank integration or analytics was introduced.
 
-## First increment
-- Optional Fold companion on the overview, with an accessible detail dialog and hide control.
-- Mood uses the selected week's budget, not an assessment of the person's financial health.
-- Growth uses currently recorded goal savings, with explicit PHP thresholds. Withdrawals can lower the displayed stage. No invented streak, bond, or discipline statistics.
-- Weekly activity search matches merchant, category, and borrower.
-- Ctrl/Cmd+K opens quick entry outside active dialogs.
-- Deferred report import, 44px edit/delete targets, narrow-screen wrapping, focus rings, reduced motion, tabular money figures.
+## Shipped in this upgrade
+- Responsive design at 320, 390, 768, and 1440 pixels: 16px forms, 44px controls, scalable layout, focus rings, reduced-motion handling, dark mode, dedicated navigation, and a Settings view.
+- Fold companion with distinct visual stages, budget-based mood, logging streak, optional play, and a cloud-saved purchase journal. No invented health score. It never dies.
+- Monthly category limits, manual recurring expense schedules (posting requires explicit approval), and separate debt balances ordered by smallest balance or highest interest.
+- Custom expense categories and manual USD/EUR/JPY/SGD/AUD conversion at entry. Original amount and conversion rate remain attached to each entry; totals and reports use PHP.
+- Optional bill reminders use the Notification API when the app is open and permission was granted.
+- Search, paginated entries, mobile gestures, and confirmations for edits and new finance records.
+- Weekly, monthly, and yearly PDF/JPG reports. CSV import uses a worker, validates rows, and skips identical imports. CSV exports protect spreadsheet formula cells.
+- PWA manifest and service worker for the static shell. Opt-in account-scoped IndexedDB snapshot for offline reading. Offline edits remain disabled. Sign-out clears the current account's snapshot.
+- Encrypted JSON backup/restore with PBKDF2-SHA256 and AES-GCM, a 5 MB import limit, strict validation, confirmation, and version-checked replacement.
+- Supabase table RLS and owner policies inspected. Excess TRUNCATE, REFERENCES, and TRIGGER permissions revoked from authenticated. Production dependency audit reports zero advisories after patched lockfile update.
 
-## Design direction
-Keep the existing navigation and workflows. Forest/teal primary (#0F766E), gold companion accent (#EAB954), white surfaces, dark green text. Use 16px inputs, 44px controls, 8/12/16/24px spacing, and existing 640px/870px breakpoints. Companion is inline rather than another floating control competing with Add on mobile.
+## Verified
+TypeScript and Pages production build pass. Synthetic browser tests navigate 12 screens at each of four viewport widths with no horizontal overflow or uncaught exceptions. At 390 pixels, browser tests save a category limit, create and post a recurring expense, add a custom category and manual USD rate, save a converted entry, export CSV, create an encrypted backup, reject a bad passphrase, preview restore, and reload offline with the snapshot. Local encryption validation includes corrupt-file and unknown-field rejection. Service worker excludes Supabase responses.
 
-## Audit findings and remaining checks
-1. Privacy notice still lacks a published administrator contact. Owner must provide a real address; do not invent one or claim legal compliance.
-2. Auth tokens are persisted in localStorage. XSS prevention and a tested CSP remain important. No changes to authentication were made in this increment.
-3. Source search found server-side secret-key references confined to the existing Edge Function, but a complete git-history secret scan was not performed.
-4. Live RLS policies, account deletion behavior, and session revocation have not been verified in this increment.
-5. Offline financial writes require account-scoped storage, conflict handling, sign-out cleanup, and an explicit sync state. Do not precache sensitive API responses.
-6. Encrypted backup/import now includes strict versioned schema validation, a 5 MB import cap, AES-GCM, PBKDF2-SHA256 (600,000 iterations), preview, typed confirmation, and optimistic-version protection. Local encryption/validation checks passed; live restore and cross-device browser QA remain unverified. Passphrases are not uploaded or persisted by this feature.
-7. Large lists still need pagination. Search currently covers the selected week only.
-8. No Lighthouse or real-device audit has been completed. Build size alone does not establish performance or WCAG compliance.
-9. Pet preference is session-only. No pet data is sent to a separate service; no analytics were added.
-10. Full envelope budgets, multicurrency, recurring entries, and debt payoff tools remain future work, not shipped features.
-
-## Verification
-TypeScript and production Pages build passed. Main JS: approximately 112 KB gzip; CSS: 28 KB gzip. Export libraries are additional chunks, so total JS exceeds the brief's 150 KB target. Authenticated desktop/mobile visual QA remains required.
-
-## Recommended roadmap
-Latest increment: encrypted backup and restore UI under Reports; offline warning and an explicit no-queue save guard. This is not full offline/PWA support.
-30 days: verify RLS and deletion/session behavior; publish privacy contact; browser tests at 320, 390, 768, 1440px; paginate activity; audit dependencies and history.
-60 days: encrypted backups with validated restore; account-scoped IndexedDB; read-only offline shell and explicit connectivity UI; category budgets.
-90 days: tested offline write reconciliation; optional persisted pet engagement; recurring entries; measured Lighthouse/accessibility remediation.
+## Limits and owner tasks
+- Real device testing and Lighthouse scores have not been measured. Main app JavaScript is approximately 142 KB gzip, CSS about 31 KB gzip; extra chunks load for CSV and reports. The original total-JS 150 KB target is not met.
+- The live restore operation and account deletion were not exercised because they would overwrite or delete a real account. The tests use synthetic data and a mocked API.
+- Offline snapshots are unencrypted in device IndexedDB. Use only on a trusted device. The browser-stored Auth session is also available to scripts in this origin. Cloud edits do not queue offline; this prevents silent conflicts.
+- The privacy notice needs a real privacy contact address. Do not claim RA 10173 certification. The Supabase advisor reports leaked-password protection disabled; enable it in the project's Auth dashboard.
+- Automatic bank CSV format mapping, native push notifications when the app is closed, and an automated debt payoff forecast are not shipped. Browser notifications work only while the app is open. USD/EUR/JPY/SGD/AUD conversion uses a user-entered rate; the app never fetches a live quote.
+- A complete historic secret scan, live cross-account access test, and real-device accessibility audit remain outstanding.

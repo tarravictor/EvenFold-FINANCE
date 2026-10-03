@@ -1,6 +1,6 @@
 import { addDays, Bill, dayLabel, Entry, Goal, GroupSplit, money, monthLabel, weekLabel } from "./finance-utils";
 
-type Report = { period: "week" | "month"; weekStart: string; monthStart: string; entries: Entry[]; allLoans: Entry[]; groupSplits: GroupSplit[]; budgetCents: number | null; bills: Bill[]; goals: Goal[] };
+type Report = { period: "week" | "month" | "year"; weekStart: string; monthStart: string; entries: Entry[]; allLoans: Entry[]; groupSplits: GroupSplit[]; budgetCents: number | null; bills: Bill[]; goals: Goal[] };
 const ink = "#182b34", muted = "#71858a", green = "#d8f2b2";
 function block(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, fill: string, radius = 14) {
   ctx.fillStyle = fill; ctx.beginPath(); ctx.roundRect(x, y, w, h, radius); ctx.fill();
@@ -29,21 +29,22 @@ export function renderReport(data: Report) {
   const categories = Object.entries(expenses.reduce<Record<string, number>>((totals, e) => { totals[e.category] = (totals[e.category] || 0) + e.amountCents; return totals; }, {})).sort((a,b)=>b[1]-a[1]);
   const rows = data.entries.filter(e => e.kind !== "income").sort((a,b)=>a.date.localeCompare(b.date) || a.description.localeCompare(b.description));
   const visibleBills = [...data.bills].sort((a,b)=>a.dueDate.localeCompare(b.dueDate));
-  const height = Math.max(1900, 1600 + rows.length*65 + categories.length*52 + borrowers.size*50 + groupShares.length*50 + groupDebts.length*50 + visibleBills.length*51 + data.goals.length*51);
+  const height = Math.max(2600, 2600 + rows.length*65 + categories.length*52 + borrowers.size*50 + groupShares.length*50 + groupDebts.length*50 + visibleBills.length*51 + data.goals.length*51);
+  if (height > 28000) throw new Error("This report is too large for an image. Choose a shorter period or export all transactions as CSV.");
   const canvas = document.createElement("canvas"); canvas.width = 1200; canvas.height = height;
   const ctx = canvas.getContext("2d"); if (!ctx) throw new Error("Report drawing is unavailable.");
   ctx.fillStyle = "#fff"; ctx.fillRect(0,0,1200,height);
   ctx.fillStyle = ink; ctx.fillRect(0,0,1200,24);
   block(ctx,70,75,58,58,green); label(ctx,"E",89,117,38,800);
-  label(ctx,"EVENFOLD / FINANCE",151,103,20,800); label(ctx,`${data.period === "week" ? "Weekly" : "Monthly"} report`,151,132,18,400,muted);
-  const periodName = data.period === "week" ? weekLabel(data.weekStart) : monthLabel(data.monthStart);
+  label(ctx,"EVENFOLD / FINANCE",151,103,20,800); label(ctx,`${data.period === "week" ? "Weekly" : data.period === "year" ? "Yearly" : "Monthly"} report`,151,132,18,400,muted);
+  const periodName = data.period === "week" ? weekLabel(data.weekStart) : data.period === "year" ? data.monthStart.slice(0, 4) : monthLabel(data.monthStart);
   label(ctx,periodName,70,220,43,800); label(ctx,"Spending, loans, bills and savings goals",70,258,19,400,muted);
   const stats = [["SPENDING",money(spent)],["TO COLLECT",money(outstanding)],["TRANSACTIONS",String(rows.length)]];
   stats.forEach(([name,value],index)=>{ const x=70+index*360; block(ctx,x,305,340,128,index===0?"#e5f2cd":"#f0f5f3");label(ctx,name,x+17,343,15,800,muted);label(ctx,value,x+17,395,27,800); });
   let y=495;
   if(data.period === "week" && data.budgetCents !== null){label(ctx,`Weekly budget: ${money(data.budgetCents)}     Remaining: ${money(data.budgetCents-spent)}`,70,y,20,600);y+=52;}
   label(ctx,data.period === "week"?"Spending by day":"Spending by date range",70,y,28,800);y+=32;
-  const periods = data.period === "week"
+  const periods = data.period === "year" ? Array.from({ length: 12 }, (_, i) => { const month = `${data.monthStart.slice(0, 4)}-${String(i + 1).padStart(2, "0")}`; return { title: monthLabel(`${month}-01`), amount: expenses.filter(e => e.date.startsWith(month)).reduce((n, e) => n + e.amountCents, 0) }; }) : data.period === "week"
     ? Array.from({length:5},(_,i)=>{const date=addDays(data.weekStart,i);return{title:dayLabel(date),amount:expenses.filter(e=>e.date===date).reduce((total,e)=>total+e.amountCents,0)};})
     : Array.from({length:5},(_,i)=>({title:`Days ${1+i*7}–${Math.min((i+1)*7,new Date(Date.UTC(Number(data.monthStart.slice(0,4)),Number(data.monthStart.slice(5,7)),0)).getUTCDate())}`,amount:expenses.filter(e=>{const day=Number(e.date.slice(8,10));return day>i*7 && day<=Math.min((i+1)*7,31);}).reduce((total,e)=>total+e.amountCents,0)}));
   periods.forEach(item=>{y+=52;label(ctx,item.title,70,y,20,500);right(ctx,money(item.amount),1130,y,20,700);ctx.fillStyle="#e8eeee";ctx.fillRect(70,y+14,1060,1);});
