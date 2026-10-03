@@ -50,7 +50,7 @@ try {
       if (width > 870) await page.getByRole("tab", { name: screen, exact: true }).click();
       else {
         const nav = page.getByRole("navigation", { name: "Main navigation" });
-        if (["Activity", "Budget", "Fold"].includes(screen)) await nav.getByRole("button", { name: screen, exact: true }).click();
+        if (["Activity", "Budget", "Split bills"].includes(screen)) await nav.getByRole("button", { name: screen, exact: true }).click();
         else { await nav.getByRole("button", { name: "More", exact: true }).click(); await page.locator(".more-card").filter({ has: page.getByText(screen, { exact: true }) }).click(); }
       }
       await page.waitForTimeout(60);
