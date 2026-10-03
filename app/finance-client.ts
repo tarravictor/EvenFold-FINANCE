@@ -1,4 +1,5 @@
 import { addDays, Bill, Entry, Goal, GroupSplit } from "./finance-utils";
+import { backupSchema, type BackupData } from "./backup";
 
 type FinanceData = { entries: Entry[]; history: Entry[]; allLoans: Entry[]; bills: Bill[]; goals: Goal[]; groupSplits: GroupSplit[]; monthStart: string; budgetCents: number | null };
 type Stored = { entries: Entry[]; bills: Bill[]; goals: Goal[]; groupSplits: GroupSplit[]; budgets: Record<string, number> };
@@ -48,6 +49,14 @@ async function request(path: string, method = "GET", body?: unknown) {
 async function state() {
   const rows = await request("finance_state?select=data,version&limit=1") as { data: Stored; version: number }[];
   return rows[0] ?? { data: empty(), version: -1 };
+}
+export async function readBackupState() { return state(); }
+export async function restoreBackup(data: BackupData, expectedVersion: number) {
+  const validated = backupSchema.parse(data);
+  const rows = expectedVersion === -1
+    ? await request("finance_state?select=version", "POST", { data: validated, version: 0 })
+    : await request(`finance_state?version=eq.${expectedVersion}&select=version`, "PATCH", { data: validated, version: expectedVersion + 1 });
+  if (!rows.length) throw new Error("Your records changed since preview. Open the backup again before restoring.");
 }
 export async function loadFinance(weekStart: string): Promise<FinanceData> {
   if (!config()) { const r = await fetch(`/api/finance?weekStart=${encodeURIComponent(weekStart)}`, { cache: "no-store" }); const d = await r.json() as FinanceData & { error?: string }; if (!r.ok) throw new Error(d.error || "Could not load your data."); return d; }
