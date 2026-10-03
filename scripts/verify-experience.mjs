@@ -25,7 +25,7 @@ const results = [];
 try {
   for (const width of [320, 390, 768, 1440]) {
     let state = structuredClone(seed), version = 1;
-    const context = await browser.newContext({ viewport: { width, height: 900 }, serviceWorkers: "block" });
+    const context = await browser.newContext({ viewport: { width, height: 900 }, serviceWorkers: "block", bypassCSP: width === 390 });
     await context.addInitScript(() => {
       localStorage.setItem("evenfold-tour-v1", "seen");
       localStorage.setItem("evenfold-session-v1", JSON.stringify({ access_token: "test-not-real", refresh_token: "test-not-real", expires_at: 4102444800, user: { id: "test-owner", email: "test@example.invalid", user_metadata: { full_name: "Victor" } } }));
@@ -57,6 +57,16 @@ try {
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
       assert.equal(overflow, false, `${screen} overflows at ${width}px`);
       if (["Budget", "Fold", "Settings"].includes(screen)) await page.screenshot({ path: `${output}/${screen.toLowerCase()}-${width}.png`, fullPage: true });
+      if (width === 390 && ["Budget", "Fold", "Settings"].includes(screen)) {
+        if (!await page.evaluate(() => !!window.axe) && process.env.AXE_PATH) await page.addScriptTag({ path: process.env.AXE_PATH });
+        if (process.env.AXE_PATH) {
+        const violations = await page.evaluate(async () => {
+          const result = await window.axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21aa"] } });
+          return result.violations.map(v => ({ id: v.id, impact: v.impact, nodes: v.nodes.map(n => n.target.join(" ")).slice(0, 4) }));
+        });
+        assert.deepEqual(violations, [], `${screen} accessibility: ${JSON.stringify(violations)}`);
+        }
+      }
     }
     if (width === 390) {
       const nav = page.getByRole("navigation", { name: "Main navigation" });
@@ -110,7 +120,11 @@ try {
       await page.getByRole("button", { name: "Preview restore" }).click();
       await page.getByText("Replace your cloud records?").waitFor();
       assert.equal(await page.getByRole("button", { name: "Replace finance records" }).isDisabled(), true);
-      await page.getByRole("button", { name: "Cancel", exact: true }).click();
+      const beforeRestore = version;
+      await page.getByLabel("Type RESTORE to confirm").fill("RESTORE");
+      await page.getByRole("button", { name: "Replace finance records" }).click();
+      await page.getByText(/Backup restored/).waitFor();
+      assert.equal(version, beforeRestore + 1);
       const settings = page.locator(".settings-stack");
       await settings.getByLabel("Appearance").selectOption("dark");
       await page.screenshot({ path: `${output}/settings-dark-390.png`, fullPage: true });

@@ -4,7 +4,7 @@ import { emptyPlanner, type Planner, recurringSchema, debtSchema, nextOccurrence
 import { offlineStore } from "./offline-store";
 import { offlinePreference } from "./device-settings";
 
-type FinanceData = { entries: Entry[]; history: Entry[]; allLoans: Entry[]; bills: Bill[]; goals: Goal[]; groupSplits: GroupSplit[]; monthStart: string; budgetCents: number | null; planner: Planner };
+type FinanceData = { entries: Entry[]; history: Entry[]; allLoans: Entry[]; bills: Bill[]; goals: Goal[]; groupSplits: GroupSplit[]; monthStart: string; budgetCents: number | null; planner: Planner; weeklyBudgets: Record<string, number> };
 type Stored = BackupData;
 const empty = (): Stored => ({ entries: [], bills: [], goals: [], groupSplits: [], budgets: {}, ...emptyPlanner() });
 
@@ -101,6 +101,16 @@ function mutate(s: Stored, p: Record<string, unknown>) {
     case "delete_goal": s.goals = s.goals.filter(x => x.id !== id(p.id)); break;
     default: throw new Error("Unknown action.");
   }
+  const savings = s.goals.reduce((n, goal) => n + goal.savedCents, 0);
+  const savingsStage = savings >= 100000000 ? 4 : savings >= 10000000 ? 3 : savings >= 2500000 ? 2 : savings >= 500000 ? 1 : 0;
+  const dates = [...new Set(s.entries.map(e => e.date))].sort();
+  let longest = 0, current = 0;
+  for (let i = 0; i < dates.length; i++) {
+    current = i && dates[i] === addDays(dates[i - 1], 1) ? current + 1 : 1;
+    longest = Math.max(longest, current);
+  }
+  const streakStage = longest >= 365 ? 4 : longest >= 90 ? 3 : longest >= 30 ? 2 : longest >= 7 ? 1 : 0;
+  s.petStage = Math.max(s.petStage, savingsStage, streakStage);
 }
 async function request(path: string, method = "GET", body?: unknown) {
   if (!navigator.onLine) throw new Error("Reconnect to save changes. Offline changes are not queued.");
@@ -134,7 +144,7 @@ export async function loadFinance(weekStart: string): Promise<FinanceData> {
   if (!config()) { const r = await fetch(`/api/finance?weekStart=${encodeURIComponent(weekStart)}`, { cache: "no-store" }); const d = await r.json() as FinanceData & { error?: string }; if (!r.ok) throw new Error(d.error || "Could not load your data."); return d; }
   const s = (await state()).data;
   const monthStart = `${weekStart.slice(0, 7)}-01`, start = `${new Date(Date.UTC(Number(monthStart.slice(0,4)), Number(monthStart.slice(5,7))-6, 1)).toISOString().slice(0,10)}`;
-  return { planner: { customCategories: s.customCategories, exchangeRates: s.exchangeRates, categoryBudgets: s.categoryBudgets, recurring: s.recurring, debts: s.debts, journal: s.journal }, entries: s.entries.filter(e => e.date >= weekStart && e.date < addDays(weekStart, 5)).sort((a,b) => b.date.localeCompare(a.date)), history: s.entries, allLoans: s.entries.filter(e => e.kind === "loan"), bills: [...s.bills].sort((a,b) => a.dueDate.localeCompare(b.dueDate)), goals: [...s.goals].sort((a,b) => a.name.localeCompare(b.name)), groupSplits: [...s.groupSplits].sort((a,b) => b.date.localeCompare(a.date)), monthStart, budgetCents: s.budgets[weekStart] ?? null };
+  return { planner: { petStage: s.petStage, customCategories: s.customCategories, exchangeRates: s.exchangeRates, categoryBudgets: s.categoryBudgets, recurring: s.recurring, debts: s.debts, journal: s.journal }, weeklyBudgets: s.budgets, entries: s.entries.filter(e => e.date >= weekStart && e.date < addDays(weekStart, 5)).sort((a,b) => b.date.localeCompare(a.date)), history: s.entries, allLoans: s.entries.filter(e => e.kind === "loan"), bills: [...s.bills].sort((a,b) => a.dueDate.localeCompare(b.dueDate)), goals: [...s.goals].sort((a,b) => a.name.localeCompare(b.name)), groupSplits: [...s.groupSplits].sort((a,b) => b.date.localeCompare(a.date)), monthStart, budgetCents: s.budgets[weekStart] ?? null };
 }
 export async function saveFinance(payload: Record<string, unknown>): Promise<void> {
   if (!navigator.onLine) throw new Error("Reconnect before saving. Offline changes are not queued.");
