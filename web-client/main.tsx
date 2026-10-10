@@ -5,6 +5,7 @@ import { LegalDialog, LegalTopic } from "../app/legal";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import "../app/globals.css";
 import "../app/experience.css";
+import "../app/wallet.css";
 import { offlineStore } from "../app/offline-store";
 import { preference } from "../app/device-settings";
 

@@ -42,7 +42,7 @@ try {
     const page = await context.newPage(), errors = [];
     page.on("pageerror", error => errors.push(error.message));
     await page.goto(`http://127.0.0.1:4178${base}`);
-    await page.getByRole("heading", { name: "Your money, in focus." }).waitFor();
+    await page.getByRole("heading", { name: "Your money, at a glance." }).waitFor();
     await page.getByText("2 expenses recorded").count();
     await page.screenshot({ path: `${output}/home-${width}.png`, fullPage: true });
     const screens = ["Activity", "Budget", "Fold", "Reports", "Settings", "Recurring", "Debts", "Split bills", "To collect", "Goals", "Bills", "Insights"];
@@ -50,7 +50,7 @@ try {
       if (width > 870) await page.getByRole("tab", { name: screen, exact: true }).click();
       else {
         const nav = page.getByRole("navigation", { name: "Main navigation" });
-        if (["Activity", "Budget", "Split bills"].includes(screen)) await nav.getByRole("button", { name: screen, exact: true }).click();
+        if (["Activity", "Split bills"].includes(screen)) await nav.getByRole("button", { name: screen, exact: true }).click();
         else { await nav.getByRole("button", { name: "More", exact: true }).click(); await page.locator(".more-card").filter({ has: page.getByText(screen, { exact: true }) }).click(); }
       }
       await page.waitForTimeout(60);
@@ -165,7 +165,7 @@ try {
   await context.route("https://aonoxfezdzwkvuocpelz.supabase.co/**", route => route.fulfill({ json: [{ data: seed, version: 1 }] }));
   const page = await context.newPage();
   await page.goto(`http://127.0.0.1:4178${base}`);
-  await page.getByRole("heading", { name: "Your money, in focus." }).waitFor();
+  await page.getByRole("heading", { name: "Your money, at a glance." }).waitFor();
   await page.waitForFunction(() => !!navigator.serviceWorker.controller, null, { timeout: 12000 });
   await page.getByRole("navigation", { name: "Main navigation" }).getByRole("button", { name: "More" }).click();
   await page.locator(".more-card").filter({ has: page.getByText("Settings", { exact: true }) }).click();
@@ -173,7 +173,7 @@ try {
   await page.getByText(/Offline viewing enabled/).waitFor();
   await context.setOffline(true);
   await page.reload();
-  await page.getByRole("heading", { name: "Your money, in focus." }).waitFor();
+  await page.getByRole("heading", { name: "Your money, at a glance." }).waitFor();
   await page.getByText(/You are offline/).waitFor();
   await page.getByText("₱185.00").first().waitFor();
   results.push("Offline app shell and opt-in snapshot: loaded after network loss");
