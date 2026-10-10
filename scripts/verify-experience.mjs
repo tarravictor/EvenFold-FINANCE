@@ -70,7 +70,8 @@ try {
     }
     if (width === 390) {
       const nav = page.getByRole("navigation", { name: "Main navigation" });
-      await nav.getByRole("button", { name: "Budget", exact: true }).click();
+      await nav.getByRole("button", { name: "More", exact: true }).click();
+      await page.locator(".more-card").filter({ has: page.getByText("Budget", { exact: true }) }).click();
       await page.getByLabel("Monthly limit (PHP)").fill("1200.50");
       await page.getByRole("button", { name: "Save limit" }).click();
       await page.getByRole("alertdialog").getByRole("button", { name: "Save budget" }).click();
@@ -140,7 +141,7 @@ try {
       await page.getByRole("alertdialog").getByRole("button", { name: "Save rate" }).click();
       await page.waitForTimeout(120);
       assert.equal(state.exchangeRates.USD, 56.25);
-      await nav.getByRole("button", { name: "Overview", exact: true }).click();
+      await nav.getByRole("button", { name: "Home", exact: true }).click();
       await page.getByRole("button", { name: "Add entry", exact: true }).click();
       await page.getByRole("dialog").getByLabel("Merchant or item").fill("Medicine");
       await page.getByRole("dialog").getByLabel("Currency").selectOption("USD");
@@ -175,6 +176,7 @@ try {
   await page.reload();
   await page.getByRole("heading", { name: "Your money, at a glance." }).waitFor();
   await page.getByText(/You are offline/).waitFor();
+  await page.getByRole("button", { name: "Previous week" }).click();
   await page.getByText("₱185.00").first().waitFor();
   results.push("Offline app shell and opt-in snapshot: loaded after network loss");
   await context.close();
