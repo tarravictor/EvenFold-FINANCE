@@ -64,6 +64,16 @@ body{font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe
 .wallet-receipt-top span:last-child{text-align:right}
 .wallet-total{display:block;font-size:clamp(44px,5vw,64px);line-height:1.05;margin-top:19px;font-variant-numeric:tabular-nums}
 .wallet-count{color:var(--ef-muted);font-size:14px;margin:9px 0 23px}
+.wallet-total.is-loading{color:transparent;border-radius:12px;background:linear-gradient(90deg,var(--ef-tint) 25%,var(--ef-line) 50%,var(--ef-tint) 75%);background-size:200% 100%;animation:ef-shimmer 1.2s linear infinite;width:min(100%,320px);user-select:none}
+@keyframes ef-shimmer{to{background-position:-200% 0}}
+.wallet-progress{position:relative;height:10px;margin:-8px 0 36px;border-radius:999px;background:var(--ef-tint)}
+.wallet-progress i{display:block;height:100%;border-radius:inherit;background:var(--ef-primary);transition:width .4s ease}
+.wallet-progress[data-over=true] i{background:var(--ef-danger,#a23c34)}
+.wallet-progress span{position:absolute;top:16px;left:0;font-size:13px;color:var(--ef-muted);white-space:nowrap}
+.wallet-progress[data-over=true] span{color:var(--ef-danger,#a23c34);font-weight:600}
+.empty-state .primary-button{margin-top:14px;display:inline-flex;gap:8px;align-items:center;padding:0 20px}
+.save-status{display:flex;align-items:center;gap:8px;animation:ef-pop .2s ease-out}
+@keyframes ef-pop{from{opacity:0;transform:translateY(8px)}}
 .wallet-receipt-stats{border-top:1px dashed var(--ef-line);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding:18px 0 22px}
 .wallet-receipt-stats button{border:0;background:transparent;text-align:left;color:var(--ef-ink);padding:0 18px 0 0;display:grid;grid-template-columns:38px minmax(0,1fr);column-gap:11px;align-items:center;min-height:110px;border-radius:10px}
 .wallet-receipt-stats button+button{border-left:1px solid var(--ef-line);padding-left:22px}
