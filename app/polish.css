@@ -63,3 +63,56 @@ html{scroll-behavior:smooth;scroll-padding-top:80px}
 @keyframes ef-breathe{50%{transform:scale(.93)}}
 @keyframes ef-dot{0%,80%,100%{opacity:.25}40%{opacity:1}}
 @media(prefers-reduced-motion:reduce){.loader-arc{animation:none;stroke-dashoffset:60}.loader-mark span,.loader-dots i{animation:none}}
+
+/* ---- Dashboard charts (dataviz skill): hero figure, daily columns, meter, composition bar ---- */
+.dash-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+.dash-stats .dash-stat:last-child:nth-child(odd){grid-column:1/-1}
+@media(min-width:700px){.dash-stats,.dash-stats:has(.dash-stat){grid-template-columns:repeat(3,minmax(0,1fr))}.dash-stats .dash-stat:last-child:nth-child(odd){grid-column:auto}}
+@media(max-width:339px){.dash-stats{grid-template-columns:1fr}}
+@media(max-width:380px) and (min-width:340px){.dash-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:380px){.dash-actions button{flex-basis:calc(50% - 8px)}.dash-actions button:first-child{flex-basis:100%}}
+.dash-figure{font-variant-numeric:lining-nums proportional-nums;font-feature-settings:normal}
+
+.dash-hero{display:grid;gap:var(--sp-4);padding:var(--sp-3);background:var(--ef-surface);border:1px solid var(--ef-line);border-radius:var(--radius-card);box-shadow:var(--shadow-rest)}
+@media(min-width:700px){.dash-hero{grid-template-columns:minmax(0,1.2fr) minmax(260px,1fr);align-items:end;padding:var(--sp-4)}}
+.dash-hero-main{display:grid;gap:var(--sp-2);justify-items:start;min-width:0}
+.dash-hero-main .mini-label{margin:0;color:var(--ef-muted)}
+.dash-hero-figure{font-family:var(--font-head);font-size:48px;line-height:56px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:lining-nums proportional-nums;font-feature-settings:normal;overflow-wrap:anywhere}
+.dash-hero-figure.is-loading{color:transparent;border-radius:var(--radius-control);background:linear-gradient(90deg,var(--ef-tint) 25%,var(--ef-line) 50%,var(--ef-tint) 75%);background-size:200% 100%;animation:ef-shimmer 1.2s linear infinite;user-select:none}
+.dash-delta{display:inline-flex;align-items:center;gap:6px;margin:0;font-size:var(--fs-sm);line-height:var(--lh-sm);color:var(--ef-muted);font-weight:500}
+.dash-delta[data-dir=up] svg{color:#d03b3b}.dash-delta[data-dir=down] svg{color:#0ca30c}
+.dash-meter-wrap{display:grid;gap:var(--sp-2);width:100%;max-width:440px;padding:var(--sp-1) 0;text-align:left;background:none;border:0;color:var(--ef-ink);border-radius:var(--radius-control)}
+.dash-meter{display:block;height:10px;border-radius:999px;background:var(--ef-tint);overflow:hidden}
+.dash-meter i{display:block;height:100%;border-radius:inherit;background:var(--ef-primary);transition:width .4s ease}
+.dash-meter[data-level=near] i{background:#fab219}.dash-meter[data-level=over] i{background:#d03b3b}
+.dash-meter-text{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px var(--sp-3);font-size:var(--fs-sm);line-height:var(--lh-sm);color:var(--ef-muted)}
+.dash-level{display:inline-flex;align-items:center;gap:6px;color:var(--ef-ink);font-weight:600}
+.dash-level[data-level=ok] svg{color:#0ca30c}.dash-level[data-level=near] svg{color:#c98500}.dash-level[data-level=over] svg{color:#d03b3b}
+.dash-cta-link{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0;background:none;border:0;color:var(--ef-primary);font-weight:600;font-size:var(--fs-sm)}
+
+.dash-days{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:end;gap:var(--sp-2);min-height:128px;padding-top:var(--sp-2);border-bottom:1px solid var(--ef-line)}
+.dash-day{display:grid;justify-items:center;align-items:end;gap:6px;min-width:0}
+.dash-day-value{min-height:18px;font-size:13px;line-height:18px;font-weight:600;color:var(--ef-ink);white-space:nowrap}
+.dash-day-bar{position:relative;display:block;width:min(24px,60%);border-radius:4px 4px 0 0;background:color-mix(in srgb,var(--ef-primary) 32%,white);outline-offset:3px}
+.dash-day-bar[data-top=true]{background:var(--ef-primary)}
+.dash-day-bar[data-empty=true]{border-radius:0;background:var(--ef-line)}
+.dash-day-bar::before{content:"";position:absolute;inset:-8px -14px 0}
+.dash-day-label{font-size:12px;line-height:16px;color:var(--ef-muted);padding-bottom:6px}
+.dash-day[data-today=true] .dash-day-label{color:var(--ef-ink);font-weight:700}
+
+.dash-stack{display:flex;gap:2px;height:20px;margin-bottom:var(--sp-3)}
+.dash-stack span{position:relative;flex-basis:0;min-width:6px;outline-offset:2px}
+.dash-stack span:first-child{border-radius:4px 0 0 4px}.dash-stack span:last-child{border-radius:0 4px 4px 0}.dash-stack span:only-child{border-radius:4px}
+.dash-stack span::before{content:"";position:absolute;inset:-6px 0}
+.dash-legend{display:grid;gap:0!important}
+.dash-card .dash-legend li{grid-template-columns:12px minmax(0,1fr) auto auto;gap:var(--sp-2);padding:10px 0;border-top:1px solid var(--ef-line)!important;padding-top:10px!important}
+.dash-card .dash-legend li:first-child{border-top:0!important;padding-top:0!important}
+.dash-key{width:12px;height:12px;border-radius:3px}
+.dash-legend-name{font-size:var(--fs-base);font-weight:500;overflow-wrap:anywhere}
+.dash-legend small{min-width:40px;text-align:right}
+
+/* Tooltips: hover and keyboard focus */
+[data-tip]:hover::after,[data-tip]:focus-visible::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);z-index:30;padding:6px 10px;border-radius:8px;background:var(--ef-ink);color:#fff;font-size:13px;line-height:18px;font-weight:500;white-space:nowrap;pointer-events:none;box-shadow:var(--shadow-raised)}
+.dash-days .dash-day:first-child [data-tip]:hover::after,.dash-days .dash-day:first-child [data-tip]:focus-visible::after,.dash-stack span:first-child:hover::after,.dash-stack span:first-child:focus-visible::after{left:0;transform:none}
+.dash-days .dash-day:last-child [data-tip]:hover::after,.dash-days .dash-day:last-child [data-tip]:focus-visible::after,.dash-stack span:last-child:hover::after,.dash-stack span:last-child:focus-visible::after{left:auto;right:0;transform:none}
+@media(prefers-reduced-motion:reduce){.dash-meter i{transition:none}}
