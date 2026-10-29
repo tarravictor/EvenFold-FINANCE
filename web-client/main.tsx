@@ -83,10 +83,11 @@ async function deleteAccount(token: string) {
 function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [checking, setChecking] = useState(true);
-  const [mode, setMode] = useState<"sign-in" | "register">("sign-in");
+  const [mode, setMode] = useState<"sign-in" | "register" | "reset">("sign-in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [accepted, setAccepted] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [legal, setLegal] = useState<LegalTopic>(null);
@@ -137,7 +138,7 @@ function App() {
           const response = await fetch(`${url}/auth/v1/user`, { headers: { apikey: key || "", Authorization: `Bearer ${hashSession.access_token}` } });
           if (!response.ok) throw new Error("Verification session expired. Please sign in again.");
           const user = await response.json() as SessionUser;
-          if (active) save({ ...hashSession, user });
+          if (active) { save({ ...hashSession, user }); if (hash.get("type") === "recovery") setAccountOpen(true); }
         } catch (error) { setMessage(error instanceof Error ? error.message : "Please sign in again."); }
         setChecking(false); return;
       }
@@ -185,8 +186,11 @@ function App() {
     setBusy(true);
     setMessage("");
     try {
-      if (mode === "register") {
-        if (password.length < 8) throw new Error("Use at least 8 characters for your password.");
+      if (mode === "reset") {
+        await auth(`recover?redirect_to=${encodeURIComponent(authRedirectUrl)}`, { email });
+        setMessage("If that email has an account, a reset link is on its way. Open it on this device to set a new password.");
+      } else if (mode === "register") {
+        if (password.length < 12) throw new Error("Use at least 12 characters for your password.");
         const result = await auth(`signup?redirect_to=${encodeURIComponent(authRedirectUrl)}`, { email, password, data: { full_name: email.split("@")[0] } });
         if (result.access_token) save({ ...result, expires_at: expiry(result) });
         else setMessage("Check your email to confirm your account, then sign in.");
@@ -229,7 +233,7 @@ function App() {
     setAccountBusy("password");
     setAccountMessage("");
     try {
-      if (newPassword.length < 8) throw new Error("Use at least 8 characters for your new password.");
+      if (newPassword.length < 12) throw new Error("Use at least 12 characters for your new password.");
       const user = await updateAccount(session.access_token, { password: newPassword });
       save({ ...session, user: user || session.user });
       setNewPassword("");
@@ -266,7 +270,7 @@ function App() {
       </form>
       <form className="form-grid account-section" onSubmit={event => void savePassword(event)}>
         <h3>Change password</h3>
-        <label>New password<input type="password" minLength={8} value={newPassword} onChange={event => setNewPassword(event.target.value)} placeholder="At least 8 characters"/></label>
+        <label>New password<input type="password" minLength={12} value={newPassword} onChange={event => setNewPassword(event.target.value)} placeholder="At least 12 characters"/></label>
         <button className="outline-button submit-button" disabled={!!accountBusy || !newPassword}>{accountBusy === "password" ? "Updating..." : "Update password"}</button>
       </form>
       <div className="account-section danger-zone">
@@ -279,7 +283,10 @@ function App() {
     </DialogContent></Dialog>
   </>;
 
-  return <main className="auth-page"><div className="auth-card"><div className="auth-brand"><span className="logo">E</span><span>EvenFold <b>FINANCE</b></span></div><p className="mini-label">YOUR MONEY, IN FOCUS</p><h1>{mode === "register" ? "Create your account" : "Welcome back"}</h1><p>Keep your spending, bills, goals, and group shares in one private space.</p><form className="form-grid" onSubmit={event => void submit(event)}><label>Email address<input autoComplete="email" type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com"/></label><label>Password<input autoComplete={mode === "register" ? "new-password" : "current-password"} type="password" minLength={mode === "register" ? 8 : undefined} required value={password} onChange={e => setPassword(e.target.value)} placeholder="Your password"/></label>{mode === "register" && <label className="auth-consent"><input type="checkbox" required checked={accepted} onChange={e => setAccepted(e.target.checked)}/><span>I have read the <button type="button" onClick={() => setLegal("privacy")}>privacy notice</button> and agree to the <button type="button" onClick={() => setLegal("terms")}>terms and conditions</button>.</span></label>}{message && <p role="status" className="auth-message">{message}</p>}<button className="primary-button" disabled={busy || !url || !key}>{busy ? "Please wait..." : mode === "register" ? "Create account" : "Sign in"}</button></form><div className="auth-links"><button onClick={() => { setMode(mode === "register" ? "sign-in" : "register"); setMessage(""); }}>{mode === "register" ? "Already have an account? Sign in" : "New here? Create an account"}</button></div>{(!url || !key) && <p className="form-error">Configure a Supabase project to enable accounts.</p>}<footer className="auth-footer"><span>Developed by Victor Tarra &amp; Codex</span><button onClick={() => setLegal("privacy")}>Privacy · RA 10173</button><button onClick={() => setLegal("terms")}>Terms</button></footer></div><LegalDialog topic={legal} onClose={() => setLegal(null)}/></main>;
+  const heading = mode === "register" ? "Create your account" : mode === "reset" ? "Reset your password" : "Welcome back";
+  const intro = mode === "reset" ? "Enter your email and we will send you a link to choose a new password." : "Keep your spending, bills, goals, and group shares in one private space.";
+  const checks = [["12+ characters", password.length >= 12], ["A number", /\d/.test(password)], ["A letter", /[a-z]/i.test(password)]] as const;
+  return <main className="auth-page"><div className="auth-card"><div className="auth-brand"><span className="logo">E</span><span>EvenFold <b>FINANCE</b></span></div><p className="mini-label">YOUR MONEY, IN FOCUS</p><h1>{heading}</h1><p>{intro}</p><form className="form-grid" onSubmit={event => void submit(event)}><label>Email address<input autoComplete="email" inputMode="email" autoCapitalize="none" spellCheck={false} type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com"/></label>{mode !== "reset" && <label>Password<span className="password-field"><input autoComplete={mode === "register" ? "new-password" : "current-password"} type={showPassword ? "text" : "password"} minLength={mode === "register" ? 12 : undefined} required value={password} onChange={e => setPassword(e.target.value)} placeholder={mode === "register" ? "At least 12 characters" : "Your password"}/><button type="button" className="password-toggle" aria-pressed={showPassword} onClick={() => setShowPassword(v => !v)}>{showPassword ? "Hide" : "Show"}</button></span></label>}{mode === "register" && <ul className="password-checks" aria-label="Password requirements">{checks.map(([label, ok]) => <li key={label} data-ok={ok}>{ok ? "✓" : "○"} {label}</li>)}</ul>}{mode === "register" && <label className="auth-consent"><input type="checkbox" required checked={accepted} onChange={e => setAccepted(e.target.checked)}/><span>I have read the <button type="button" onClick={() => setLegal("privacy")}>privacy notice</button> and agree to the <button type="button" onClick={() => setLegal("terms")}>terms and conditions</button>.</span></label>}<p role="status" aria-live="polite" className={message ? "auth-message" : "sr-only"}>{message}</p><button className="primary-button" disabled={busy || !url || !key || (mode === "register" && !checks.every(c => c[1]))}>{busy ? "Please wait..." : mode === "register" ? "Create account" : mode === "reset" ? "Send reset link" : "Sign in"}</button></form><div className="auth-links">{mode === "sign-in" && <button type="button" onClick={() => { setMode("reset"); setMessage(""); }}>Forgot your password?</button>}<button type="button" onClick={() => { setMode(mode === "sign-in" ? "register" : "sign-in"); setMessage(""); }}>{mode === "sign-in" ? "New here? Create an account" : mode === "register" ? "Already have an account? Sign in" : "Back to sign in"}</button></div>{(!url || !key) && <p className="form-error">Configure a Supabase project to enable accounts.</p>}<footer className="auth-footer"><span>Developed by Victor Tarra &amp; Codex</span><button type="button" onClick={() => setLegal("privacy")}>Privacy · RA 10173</button><button type="button" onClick={() => setLegal("terms")}>Terms</button></footer></div><LegalDialog topic={legal} onClose={() => setLegal(null)}/></main>;
 }
 
 createRoot(document.getElementById("root")!).render(<App/>);

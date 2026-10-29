@@ -9,3 +9,7 @@ This repository has a static React build (`pnpm build:pages`) for GitHub Pages. 
 5. Registration is live once Supabase Auth is configured. Provide the privacy contact and confirm the account deletion process and legal terms as soon as possible. Review privacy obligations with qualified counsel. The on-screen privacy notice currently marks account deletion and contact as pending when no contact variable is configured.
 
 Existing D1 account records need a deliberate, private migration with the account owner's consent and a reliable identity mapping. Do not place an export in Git history or a Pages artifact.
+
+## Account deletion function: restrict CORS
+
+Set the `ALLOWED_ORIGIN` secret on the `delete-account` Supabase function to your Pages origin (for example `https://<user>.github.io`). Without it, browsers get no CORS grant and deletion from the site will fail.

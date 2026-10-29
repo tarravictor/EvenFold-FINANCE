@@ -1,0 +1,13 @@
+node_modules/
+pages-dist/
+dist/
+.next/
+.wrangler/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+supabase/.temp/
+.sites-runtime/
+*.tsbuildinfo

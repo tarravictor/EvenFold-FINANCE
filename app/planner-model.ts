@@ -11,7 +11,7 @@ export const debtSchema = z.object({ id: z.string().uuid(), name: label, balance
 export const plannerShape = {
   petStage: z.number().int().min(0).max(4).default(0),
   customCategories: z.array(z.string().trim().min(1).max(100)).max(50).default([]),
-  exchangeRates: z.record(z.enum(["USD", "EUR", "JPY", "SGD", "AUD"]), z.number().positive().max(100000)).default({}),
+  exchangeRates: z.partialRecord(z.enum(["USD", "EUR", "JPY", "SGD", "AUD"]), z.number().positive().max(100000)).default({}),
   categoryBudgets: z.record(z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/), z.record(label, cents)).default({}),
   recurring: z.array(recurringSchema).max(500).default([]),
   debts: z.array(debtSchema).max(500).default([]),

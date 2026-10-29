@@ -1,7 +1,10 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 
+// Set ALLOWED_ORIGIN (e.g. https://<user>.github.io) in the function secrets; browsers from other origins get no CORS grant.
+const allowedOrigin = Deno.env.get("ALLOWED_ORIGIN") || "";
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": allowedOrigin,
+  "Vary": "Origin",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
@@ -56,10 +59,10 @@ Deno.serve(async (req) => {
     .from("finance_state")
     .delete()
     .eq("owner", data.user.id);
-  if (stateError) return json({ error: stateError.message }, 500);
+  if (stateError) { console.error("delete finance_state failed", stateError.message); return json({ error: "Could not delete your data. Please try again." }, 500); }
 
   const { error: deleteError } = await adminClient.auth.admin.deleteUser(data.user.id);
-  if (deleteError) return json({ error: deleteError.message }, 500);
+  if (deleteError) { console.error("delete user failed", deleteError.message); return json({ error: "Could not delete your account. Please try again." }, 500); }
 
   return json({ ok: true });
 });
