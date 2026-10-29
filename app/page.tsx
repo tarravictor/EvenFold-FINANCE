@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDownLeft, ArrowRight, ArrowUpRight, BarChart3, CalendarDays, Check, ChevronLeft, ChevronRight, CircleDollarSign, Clock3, Download, FileImage, FileText, LayoutDashboard, List, MessageSquare, MoreHorizontal, Pencil, Plus, Receipt, Target, Trash2, Users, Wallet } from "lucide-react";
+import { ArrowDownLeft, ArrowRight, ArrowUpRight, BarChart3, CalendarDays, Check, ChevronLeft, ChevronRight, CircleDollarSign, Clock3, Download, FileImage, FileText, LayoutDashboard, List, MessageSquare, MoreHorizontal, Pencil, Plus, Receipt, Target, Trash2, Users, Wallet, LogOut } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -35,7 +35,7 @@ const navigation: { id: View; label: string; icon: typeof LayoutDashboard }[] = 
   { id: "feedback", label: "Feedback", icon: MessageSquare },
   { id: "settings", label: "Settings", icon: Settings2 },
 ];
-const mobileViews: View[] = ["overview", "activity", "collect", "splits", "goals"];
+const mobileViews: View[] = ["overview", "settings", "collect", "splits"];
 const pageCopy: Record<View, { title: string; detail: string }> = {
   feedback: { title: "Share your feedback.", detail: "Help us make EvenFold better for you." },
   settings: { title: "Make it yours.", detail: "Account, privacy, and backups." },
@@ -262,7 +262,7 @@ export default function Home({ accountName = "there", accountEmail, onAccount, o
 
   return <Tabs value={view} onValueChange={value => go(value as View)} className="app-shell">
     <aside className="sidebar"><div className="app-brand"><span className="logo">E</span><span><b>EvenFold</b><small>FINANCE</small></span></div><p className="nav-caption">YOUR SPACE</p><TabsList className="side-nav" aria-label="Main navigation">{navigation.map(({ id, label, icon: Icon }) => <TabsTrigger key={id} value={id}><Icon size={19}/><span>{label}</span></TabsTrigger>)}</TabsList><div className="sidebar-bottom"><QuoteOfTheDay/></div></aside>
-    <div className="app-main"><header className="app-top"><div className="mobile-brand"><span className="logo">E</span><span><b>EvenFold</b><small>FINANCE</small></span></div><div className="app-top-left"><span className="top-context">EVENFOLD FINANCE</span><span className="top-divider"/><span className="top-status">{greeting()}, {accountName}</span></div><button type="button" onClick={() => go("settings")} className="avatar" title="Open settings" aria-label={accountEmail ? `Signed in as ${accountEmail}` : "Private account"}>{accountName.slice(0, 1).toUpperCase()}</button></header>
+    <div className="app-main"><header className="app-top"><div className="mobile-brand"><span className="logo">E</span><span><b>EvenFold</b><small>FINANCE</small></span></div><div className="app-top-left"><span className="top-context">EVENFOLD FINANCE</span><span className="top-divider"/><span className="top-status">{greeting()}, {accountName}</span></div><div className="app-top-actions"><button type="button" onClick={() => go("settings")} className="avatar" title="Open settings" aria-label={accountEmail ? `Signed in as ${accountEmail}` : "Private account"}>{accountName.slice(0, 1).toUpperCase()}</button><button type="button" className="top-logout" title="Sign out" aria-label="Sign out" disabled={!onSignOut} onClick={() => confirmChange({ title: "Sign out?", detail: "Your cloud records stay saved. The offline copy for this account will be removed from this browser.", confirmLabel: "Sign out", onConfirm: () => onSignOut?.() })}><LogOut size={18}/></button></div></header>
       <a className="skip-link" href="#main-content">Skip to content</a><main id="main-content" className="content" tabIndex={-1}><div className="page-heading"><div><h1>{pageCopy[view].title}</h1><p className="heading-copy">{pageCopy[view].detail}</p></div><button className="primary-button heading-add" onClick={() => openEntry("expense")}><Plus size={18}/> Add entry</button></div>
         {(["overview", "activity", "insights", "reports"] as View[]).includes(view) && <div className="week-toolbar"><div className="week-label"><CalendarDays size={20}/><div><small>SELECTED WEEK · TUESDAY–SATURDAY</small><strong>{weekLabel(weekStart)}</strong></div></div><div className="week-controls"><button aria-label="Previous week" onClick={() => setWeekStart(w => addDays(w, -7))}><ChevronLeft size={20}/></button>{weekStart !== currentWeek && <button className="today-button" onClick={() => setWeekStart(currentWeek)}>This week</button>}<button aria-label="Next week" onClick={() => setWeekStart(w => addDays(w, 7))}><ChevronRight size={20}/></button></div></div>}
         {offline && <p className="offline-notice" role="status">You are offline. Displayed records may be out of date. Reconnect to save changes or create a cloud backup.</p>}
