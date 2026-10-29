@@ -12,6 +12,7 @@ import "../app/typography.css";
 import "../app/layout.css";
 import "../app/polish.css";
 import { offlineStore } from "../app/offline-store";
+import { Loader } from "../app/loader";
 
 document.documentElement.dataset.theme = "light";
 window.addEventListener("beforeinstallprompt", event => { event.preventDefault(); (window as Window & { evenfoldInstall?: Event }).evenfoldInstall = event; });
@@ -262,7 +263,7 @@ function App() {
     }
   }
 
-  if (checking) return <main className="auth-page"><div className="auth-card">Loading your account...</div></main>;
+  if (checking) return <Loader/>;
   if (session) return <>
     <Home key={session.user?.id || "session"} accountName={name} accountEmail={session.user?.email} onAccount={() => setAccountOpen(true)} onSignOut={() => void signOut()}/>
     <Dialog open={accountOpen} onOpenChange={setAccountOpen}><DialogContent className="account-dialog"><DialogHeader><DialogTitle>Account settings</DialogTitle><DialogDescription>Edit your profile, update your password, or delete your account.</DialogDescription></DialogHeader>
