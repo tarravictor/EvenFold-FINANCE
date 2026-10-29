@@ -1,0 +1,42 @@
+/* EvenFold type system: Plus Jakarta Sans for headings and figures, Inter for everything else.
+   Loaded after the other stylesheets so these tokens are the final word. */
+@font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:swap;src:url("./inter.woff2") format("woff2")}
+@font-face{font-family:"Plus Jakarta Sans";font-style:normal;font-weight:200 800;font-display:swap;src:url("./jakarta.woff2") format("woff2")}
+/* Metric-matched fallbacks keep text from shifting when the web fonts arrive. */
+@font-face{font-family:"Inter Fallback";src:local("Arial");size-adjust:107%;ascent-override:90%;descent-override:22%;line-gap-override:0%}
+@font-face{font-family:"Jakarta Fallback";src:local("Arial");size-adjust:104%;ascent-override:94%;descent-override:24%;line-gap-override:0%}
+
+:root{
+  --font-body:"Inter","Inter Fallback",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-head:"Plus Jakarta Sans","Jakarta Fallback","Inter",ui-sans-serif,system-ui,sans-serif;
+  /* Type scale: size / line-height */
+  --fs-label:12px;--lh-label:16px;
+  --fs-sm:14px;--lh-sm:20px;
+  --fs-base:16px;--lh-base:24px;
+  --fs-lg:20px;--lh-lg:28px;
+  --fs-xl:24px;--lh-xl:32px;
+  --fs-2xl:32px;--lh-2xl:40px;
+  --fs-3xl:40px;--lh-3xl:48px;
+  /* 8pt spacing, radius and shadow tokens */
+  --sp-1:4px;--sp-2:8px;--sp-3:16px;--sp-4:24px;--sp-5:32px;--sp-6:48px;
+  --radius-card:12px;--radius-control:8px;
+  --shadow-rest:0 1px 2px #10231c0f,0 2px 8px #10231c0d;
+  --shadow-raised:0 4px 16px #10231c1a;
+}
+html{-webkit-text-size-adjust:100%}
+body,button,input,select,textarea{font-family:var(--font-body)}
+body{font-size:var(--fs-base);line-height:var(--lh-base);font-weight:400;font-variant-numeric:tabular-nums lining-nums;font-feature-settings:"cv11","ss03";-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+h1,h2,h3,h4,.app-brand b,.mobile-brand b,.auth-brand,.logo,.wallet-total,.summary-card>strong,.hero-card>strong,.wallet-stat-label+strong,.wallet-action strong,.envelope strong,.transaction-value b,.dialog-title,[data-slot=dialog-title],[data-slot=alert-dialog-title]{font-family:var(--font-head);font-variant-numeric:tabular-nums lining-nums}
+h1{font-size:var(--fs-2xl);line-height:var(--lh-2xl);font-weight:700;letter-spacing:-.02em}
+h2{font-size:var(--fs-lg);line-height:var(--lh-lg);font-weight:600;letter-spacing:-.01em}
+h3{font-size:var(--fs-base);line-height:var(--lh-base);font-weight:600}
+@media(min-width:871px){h1{font-size:var(--fs-3xl);line-height:var(--lh-3xl);letter-spacing:-.025em}}
+/* Small uppercase labels */
+.mini-label,.section-kicker,.card-top,.nav-caption,.wallet-receipt-top,.wallet-stat-label,.week-label small,.category-head,.chart-day small{font-size:var(--fs-label);line-height:var(--lh-label);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+/* Money and counts always align in columns */
+.num,.wallet-total,.wallet-receipt-stats strong,.summary-card>strong,.hero-card>strong,.transaction-value b,.envelope strong,.preview-row b,.category b,.chart-day strong{font-variant-numeric:tabular-nums lining-nums;font-feature-settings:"tnum","lnum"}
+.wallet-total{font-size:var(--fs-3xl);line-height:var(--lh-3xl);font-weight:700;letter-spacing:-.025em}
+small{font-size:var(--fs-sm)}
+input::placeholder,textarea::placeholder{color:var(--ef-muted);opacity:1}
+:focus-visible{outline-offset:2px}
+@media(forced-colors:active){.dash-stat,.dash-card,.surface{border:1px solid CanvasText}}

@@ -7,7 +7,7 @@ export function CsvPanel({ entries, save }: { entries: Entry[]; save: (p: Record
   useEffect(() => () => worker.current?.terminate(), []);
   useEffect(() => () => { if (url) URL.revokeObjectURL(url); }, [url]);
   return <section className="settings-section csv-panel"><h2>CSV import & export</h2><p>All recorded expenses and loans, in PHP. CSV is not encrypted; protect downloaded files. Identical rows are skipped during import.</p><button className="outline-button" onClick={() => {
-    const rows = entries.filter(e => e.kind !== "income").map(e => ({ date: e.date, kind: e.kind, description: e.description, category: e.category, borrower: e.borrower || "", amount: (e.amountCents / 100).toFixed(2), settled: e.settled }));
+    const rows = entries.map(e => ({ date: e.date, kind: e.kind, description: e.description, category: e.category, borrower: e.borrower || "", amount: (e.amountCents / 100).toFixed(2), settled: e.settled }));
     const csv = rows.length ? Papa.unparse(rows, { escapeFormulae: true }) : "date,kind,description,category,borrower,amount,settled\r\n";
     setUrl(URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" })));
   }}>Prepare CSV download</button>{url && <a className="report-ready" href={url} download="evenfold-transactions.csv">Download transactions CSV</a>}<label className="activity-search">Import CSV (maximum 2 MB)<input type="file" accept=".csv,text/csv" disabled={busy} onChange={async e => {

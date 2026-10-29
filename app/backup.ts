@@ -9,7 +9,7 @@ const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(value => {
 });
 const cents = z.number().int().min(0).max(1000000000);
 const flag = z.union([z.literal(0), z.literal(1)]);
-const entry = z.object({ id, date, kind: z.enum(["expense", "loan", "income"]), description: text, category: text, borrower: text.nullable(), amountCents: cents, settled: flag, source: z.object({ currency: z.enum(["USD", "EUR", "JPY", "SGD", "AUD"]), amountCents: cents, rate: z.number().positive().max(100000) }).strict().optional() }).strict();
+const entry = z.object({ id, date, kind: z.enum(["expense", "loan"]), description: text, category: text, borrower: text.nullable(), amountCents: cents, settled: flag, source: z.object({ currency: z.enum(["USD", "EUR", "JPY", "SGD", "AUD"]), amountCents: cents, rate: z.number().positive().max(100000) }).strict().optional() }).strict();
 const bill = z.object({ id, name: text, amountCents: cents, dueDate: date, paid: flag }).strict();
 const goal = z.object({ id, name: text, targetCents: cents.refine(n => n > 0), savedCents: cents }).strict();
 const share = z.object({ id, splitId: id, name: text, amountCents: cents, paid: flag }).strict();

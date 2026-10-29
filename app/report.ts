@@ -27,7 +27,7 @@ export function renderReport(data: Report) {
   const borrowers = new Map<string, number>();
   openLoans.forEach(e => borrowers.set(e.borrower || "Unknown", (borrowers.get(e.borrower || "Unknown") || 0) + e.amountCents));
   const categories = Object.entries(expenses.reduce<Record<string, number>>((totals, e) => { totals[e.category] = (totals[e.category] || 0) + e.amountCents; return totals; }, {})).sort((a,b)=>b[1]-a[1]);
-  const rows = data.entries.filter(e => e.kind !== "income").sort((a,b)=>a.date.localeCompare(b.date) || a.description.localeCompare(b.description));
+  const rows = data.entries.sort((a,b)=>a.date.localeCompare(b.date) || a.description.localeCompare(b.description));
   const visibleBills = [...data.bills].sort((a,b)=>a.dueDate.localeCompare(b.dueDate));
   const height = Math.max(2600, 2600 + rows.length*65 + categories.length*52 + borrowers.size*50 + groupShares.length*50 + groupDebts.length*50 + visibleBills.length*51 + data.goals.length*51);
   if (height > 28000) throw new Error("This report is too large for an image. Choose a shorter period or export all transactions as CSV.");

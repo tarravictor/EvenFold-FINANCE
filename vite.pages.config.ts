@@ -7,7 +7,7 @@ function offlineShell(): Plugin {
   return {
     name: "evenfold-offline-shell", apply: "build",
     generateBundle(_options, bundle) {
-      const assets = [...new Set(["index.html", "manifest.webmanifest", "app-icon.svg", ...Object.keys(bundle).filter(name => /\.(js|css|html)$/.test(name))])];
+      const assets = [...new Set(["index.html", "manifest.webmanifest", "app-icon.svg", ...Object.keys(bundle).filter(name => /\.(js|css|html|woff2)$/.test(name))])];
       const revision = createHash("sha256").update(JSON.stringify(assets)).digest("hex").slice(0, 12);
       this.emitFile({ type: "asset", fileName: "sw.js", source: `
 const CACHE = 'evenfold-shell-${revision}';

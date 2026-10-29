@@ -1,0 +1,80 @@
+/* Shared screen system for Activity, Collect, Split bills, Insights, Bills, Goals, Reports, Budget,
+   Recurring, Debts, Fold and Settings. Same cards, spacing, controls and rhythm as the dashboard.
+   Loaded after the legacy stylesheets and before typography.css. */
+
+/* Page rhythm */
+.view-content[hidden]{display:none}
+.view-content:not([hidden]){display:grid;gap:var(--sp-4);align-content:start}
+.page-heading{margin-bottom:var(--sp-4)}
+.page-heading h1{margin:0}
+.heading-copy{margin:var(--sp-1) 0 0;font-size:var(--fs-base);line-height:var(--lh-base)}
+.section-toolbar,.activity-actions{margin-bottom:0;gap:var(--sp-3)}
+.section-toolbar p,.section-description,.surface-note{font-size:var(--fs-sm);line-height:var(--lh-sm)}
+
+/* One card */
+.surface,.envelope,.split-record,.split-form-card,.planner-form,.report-card,.goal-card,.borrower-card,.insight-stat,.more-card,.backup-panel{background:var(--ef-surface);color:var(--ef-ink);border:1px solid var(--ef-line);border-radius:var(--radius-card);box-shadow:var(--shadow-rest)}
+.surface,.planner-form,.split-form-card,.backup-panel{padding:var(--sp-3)}
+.envelope,.goal-card,.borrower-card,.split-record,.insight-stat{padding:var(--sp-3)}
+@media(min-width:700px){.surface,.planner-form,.split-form-card,.backup-panel{padding:var(--sp-4)}.envelope,.goal-card,.borrower-card,.split-record,.insight-stat{padding:var(--sp-4) var(--sp-3)}}
+.surface-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:var(--sp-2);margin-bottom:var(--sp-3)}
+.surface-heading h2,.envelope-head h2{margin:0}
+.surface-heading .mini-label{margin:0 0 var(--sp-1);color:var(--ef-muted)}
+
+/* Grids of cards */
+.main-grid,.goal-grid,.borrower-grid,.insight-grid,.insight-cards,.envelope-list,.more-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--sp-3)}
+@media(min-width:700px){.goal-grid,.borrower-grid,.insight-cards,.envelope-list,.more-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(min-width:1000px){.main-grid,.insight-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-4)}.more-grid,.borrower-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.dash-secondary{grid-template-columns:minmax(0,1fr)!important}
+
+/* Lists and rows */
+.transaction-list,.bill-list{display:grid;gap:0}
+.transaction,.bill-row,.schedule-row{padding:var(--sp-3) 0;border-bottom:1px solid var(--ef-line)}
+.transaction:last-child,.bill-row:last-child,.schedule-row:last-child{border-bottom:0}
+.day-group{padding-bottom:var(--sp-2)}
+.day-heading{padding:var(--sp-2) 0;margin-bottom:var(--sp-1)}
+.day-heading h2{font-size:var(--fs-base);line-height:var(--lh-base);margin:0}
+.day-heading span{font-size:var(--fs-sm);color:var(--ef-muted)}
+.quiet-row{padding:var(--sp-2) 0;font-size:var(--fs-sm)}
+.transaction-name strong,.bill-main strong,.schedule-row h3{font-size:var(--fs-base);line-height:var(--lh-base);font-weight:600}
+.transaction-name span,.transaction-value small,.bill-meta,.schedule-row p{font-size:var(--fs-sm);line-height:var(--lh-sm);color:var(--ef-muted)}
+.transaction-value b,.bill-row b,.schedule-row strong,.split-record-share b,.borrower-line b,.goal-card strong{font-variant-numeric:tabular-nums lining-nums}
+
+/* Empty states */
+.empty-state{display:grid;justify-items:center;gap:var(--sp-2);padding:var(--sp-5) var(--sp-3);text-align:center}
+.empty-state strong{font-size:var(--fs-base);font-weight:600}
+.empty-state p{margin:0;max-width:40ch;font-size:var(--fs-sm);line-height:var(--lh-sm)}
+.muted-empty{font-size:var(--fs-sm);line-height:var(--lh-sm)}
+
+/* Forms: one control size, one focus ring */
+.form-grid{display:grid;gap:var(--sp-3)}
+.form-grid label,.compact-field,.inline-form label,.activity-search{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:500;display:grid;gap:6px}
+.form-grid input:not([type=checkbox]):not([type=radio]),.form-grid select,.form-grid textarea,.inline-form input,.inline-form select,.compact-field input,.compact-field select,.activity-search input,.settings-row select{min-height:48px;border-radius:var(--radius-control);border:1px solid var(--ef-line);background:var(--ef-surface);color:var(--ef-ink);font-size:var(--fs-base);padding:10px 12px}
+.form-grid input:focus-visible,.form-grid select:focus-visible,.form-grid textarea:focus-visible,.inline-form input:focus-visible,.activity-search input:focus-visible{outline:3px solid color-mix(in srgb,var(--ef-primary) 55%,transparent);outline-offset:1px;border-color:var(--ef-primary)}
+.form-error{margin:0;padding:var(--sp-2) var(--sp-3);border-radius:var(--radius-control);font-size:var(--fs-sm);font-weight:500;color:#9f1c14;background:#fee4e2}
+:root[data-theme=dark] .form-error{color:#fecdca;background:#7a271a66}
+.error-banner,.offline-notice{border-radius:var(--radius-control);font-size:var(--fs-sm);line-height:var(--lh-sm);padding:var(--sp-2) var(--sp-3)}
+
+/* Buttons: consistent size, weight, radius */
+.primary-button,.outline-button,.light-button,.danger-button,.confirm-primary-button,.confirm-danger-button{min-height:44px;padding:0 var(--sp-3);border-radius:var(--radius-control);font-size:var(--fs-sm);font-weight:600;line-height:var(--lh-sm)}
+.submit-button{width:100%;display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-2);min-height:48px;font-size:var(--fs-base)}
+.link-button{font-size:var(--fs-sm);font-weight:600;display:inline-flex;align-items:center;gap:4px}
+.kind-switch{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;padding:4px;border-radius:var(--radius-card);background:var(--ef-tint)}
+.kind-switch button{min-height:40px;border-radius:var(--radius-control);font-size:var(--fs-sm);font-weight:600}
+.kind-switch button.active{background:var(--ef-surface);box-shadow:var(--shadow-rest)}
+
+/* Settings */
+.settings-stack{display:grid;gap:var(--sp-3)}
+.settings-section{margin:0;padding:var(--sp-3);background:var(--ef-surface);border:1px solid var(--ef-line);border-radius:var(--radius-card);box-shadow:var(--shadow-rest)}
+.settings-section h2{margin:0 0 var(--sp-2)}
+.settings-row{padding:var(--sp-2) 0;border-top:1px solid var(--ef-line)}
+.settings-row:first-of-type{border-top:0}
+.settings-row p,.settings-section>p{font-size:var(--fs-sm);line-height:var(--lh-sm)}
+@media(min-width:700px){.settings-section{padding:var(--sp-4)}}
+
+/* Dialogs */
+[data-slot=dialog-content],[data-slot=alert-dialog-content]{border-radius:var(--radius-card)}
+[data-slot=dialog-description],[data-slot=alert-dialog-description]{font-size:var(--fs-sm);line-height:var(--lh-sm)}
+
+/* Progress bars everywhere share one shape */
+.goal-track,.category-meter,.envelope progress{height:8px;border-radius:999px}
+.save-status{font-size:var(--fs-sm);font-weight:600;border-radius:var(--radius-control)}

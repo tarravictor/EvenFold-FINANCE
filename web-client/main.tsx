@@ -6,6 +6,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import "../app/globals.css";
 import "../app/experience.css";
 import "../app/wallet.css";
+import "../app/dashboard.css";
+import "../app/screens.css";
+import "../app/typography.css";
 import { offlineStore } from "../app/offline-store";
 import { preference } from "../app/device-settings";
 
