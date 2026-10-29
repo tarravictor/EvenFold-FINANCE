@@ -35,3 +35,12 @@
 ::selection{background:color-mix(in srgb,var(--ef-primary) 25%,white)}
 html{scroll-behavior:smooth;scroll-padding-top:80px}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.side-nav button,.dash-card,.surface{transition:none}}
+
+/* Feedback */
+.feedback{display:grid;gap:var(--sp-3)}
+.feedback-note{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--sp-3);padding:var(--sp-3);background:var(--ef-surface);border:1px solid var(--ef-line);border-radius:var(--radius-card)}
+.feedback-note p{flex:1 1 320px;margin:0;color:var(--ef-muted);font-size:var(--fs-sm);line-height:var(--lh-sm)}
+.feedback-note a{display:inline-flex;align-items:center;gap:var(--sp-2);text-decoration:none}
+.feedback-frame{position:relative;background:var(--ef-surface);border:1px solid var(--ef-line);border-radius:var(--radius-card);overflow:hidden;box-shadow:var(--shadow-rest)}
+.feedback-frame iframe{display:block;width:100%;height:max(720px,78vh);border:0;background:#fff}
+.feedback-loading{position:absolute;inset:0;display:grid;place-items:center;margin:0;color:var(--ef-muted)}

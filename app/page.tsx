@@ -1,13 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDownLeft, ArrowRight, ArrowUpRight, BarChart3, CalendarDays, Check, ChevronLeft, ChevronRight, CircleDollarSign, Clock3, Download, FileImage, FileText, LayoutDashboard, List, MoreHorizontal, Pencil, Plus, Receipt, Target, Trash2, Users, Wallet } from "lucide-react";
+import { ArrowDownLeft, ArrowRight, ArrowUpRight, BarChart3, CalendarDays, Check, ChevronLeft, ChevronRight, CircleDollarSign, Clock3, Download, FileImage, FileText, LayoutDashboard, List, MessageSquare, MoreHorizontal, Pencil, Plus, Receipt, Target, Trash2, Users, Wallet } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { addDays, Bill, currentWeekStart, dayLabel, Entry, Goal, GroupSplit, money, monthLabel, todayInManila, weekDays, weekLabel } from "./finance-utils";
 import { Dashboard } from "./dashboard";
 import { QuoteOfTheDay } from "./quote";
+import { Feedback } from "./feedback";
 import { BackupPanel } from "./backup-panel";
 import { Settings } from "./settings";
 import { CsvPanel } from "./csv-panel";
@@ -20,7 +21,7 @@ import { LegalDialog, LegalTopic } from "./legal";
 import { Onboarding } from "./onboarding";
 import { loadFinance, saveFinance } from "./finance-client";
 
-type View = "overview" | "activity" | "collect" | "splits" | "goals" | "reports" | "settings";
+type View = "overview" | "activity" | "collect" | "splits" | "goals" | "reports" | "feedback" | "settings";
 type EntryKind = "expense" | "loan";
 type ReportPeriod = "week" | "month" | "year";
 type ConfirmTarget = { title: string; detail: string; confirmLabel: string; tone?: "danger" | "default"; onConfirm: () => unknown | Promise<unknown> };
@@ -31,11 +32,13 @@ const navigation: { id: View; label: string; icon: typeof LayoutDashboard }[] = 
   { id: "splits", label: "Split bills", icon: CircleDollarSign },
   { id: "goals", label: "Goals", icon: Target },
   { id: "reports", label: "Reports", icon: FileText },
+  { id: "feedback", label: "Feedback", icon: MessageSquare },
   { id: "settings", label: "Settings", icon: Settings2 },
 ];
 const mobileViews: View[] = ["overview", "activity", "collect", "splits", "goals"];
 const pageCopy: Record<View, { title: string; detail: string }> = {
-  settings: { title: "Make it yours.", detail: "Account, appearance, privacy, and backups." },
+  feedback: { title: "Share your feedback.", detail: "Help us make EvenFold better for you." },
+  settings: { title: "Make it yours.", detail: "Account, privacy, and backups." },
   overview: { title: "Your money, at a glance.", detail: "A simpler way to stay on top of your week." },
   activity: { title: "All activity.", detail: "Every purchase and loan for the week." },
   collect: { title: "Money to collect.", detail: "Outstanding loans and group shares across all your weeks." },
@@ -273,8 +276,9 @@ export default function Home({ accountName = "there", accountEmail, onAccount, o
         <TabsContent value="splits" className="view-content"><SplitBills splits={groupSplits} saving={saving} loading={loading} error={error} onSave={save} onConfirm={confirmChange}/></TabsContent>
         <TabsContent value="goals" className="view-content"><div className="section-toolbar"><div><span className="section-kicker">SAVINGS GOALS</span><p>{goals.length} {goals.length === 1 ? "goal" : "goals"} · {money(goals.reduce((total, goal) => total + goal.savedCents, 0))} saved</p></div><button className="primary-button" onClick={() => { setGoalName(""); setGoalTarget(""); setGoalOpen(true); }}><Plus size={17}/> New goal</button></div><div className="disclosure">Goal contributions are tracked separately from spending.</div>{goals.length ? <div className="goal-grid">{goals.map(goal => { const progress = Math.min(100, Math.round(goal.savedCents / goal.targetCents * 100)); return <section className="surface goal-card" key={goal.id}><div className="goal-card-head"><span className="goal-icon"><Target size={20}/></span><button aria-label={`Delete ${goal.name}`} className="delete-button" onClick={() => confirmDelete(goal.name, "delete_goal", goal.id)}><Trash2 size={16}/></button></div><h2>{goal.name}</h2><strong>{money(goal.savedCents)}</strong><p>of {money(goal.targetCents)} target</p><div className="goal-progress-label"><span>Progress</span><b>{progress}%</b></div><div className="goal-track"><i style={{ width: `${progress}%` }}/></div><div className="goal-actions"><button className="primary-button" onClick={() => { setAdjustGoal(goal); setAdjustMode("add"); setAdjustAmount(""); }}>Add savings</button><button className="outline-button" onClick={() => { setAdjustGoal(goal); setAdjustMode("withdraw"); setAdjustAmount(""); }}>Withdraw</button></div></section>; })}</div> : <section className="surface"><div className="empty-state"><span className="empty-icon"><Target size={22}/></span><strong>No savings goals yet</strong><p>Set a target and track your progress.</p><button className="primary-button" onClick={() => setGoalOpen(true)}>Create goal</button></div></section>}</TabsContent>
         <TabsContent value="reports" className="view-content"><section className="report-card"><div className="report-visual"><div className="paper"><span className="paper-brand">EVENFOLD / FINANCE</span><div className="paper-line big"/><div className="paper-line"/><div className="paper-boxes"><i/><i/><i/></div><div className="paper-line"/><div className="paper-line short"/><div className="paper-line"/></div></div><div className="report-info"><p className="mini-label">WEEKLY OR MONTHLY</p><h2>Take your numbers with you.</h2><p>Choose a period and download a report with spending, category totals, transactions, outstanding loans and group shares, bills, and goals.</p><div className="kind-switch report-switch"><button className={reportPeriod === "week" ? "active" : ""} onClick={() => setReportPeriod("week")}>Selected week</button><button className={reportPeriod === "month" ? "active" : ""} onClick={() => setReportPeriod("month")}>Selected month</button><button className={reportPeriod === "year" ? "active" : ""} onClick={() => setReportPeriod("year")}>Selected year</button></div><div className="report-selection"><strong>{reportName}</strong><span>{reportEntries.length} entries · {money(sum(reportEntries.filter(e => e.kind === "expense")))} spent</span></div><div className="report-buttons"><button className="primary-button" disabled={loading || !!reportBusy} onClick={() => confirmReport("pdf")}><FileText size={18}/>{reportBusy === "pdf" ? "Creating PDF…" : "Generate PDF"}</button><button className="outline-button" disabled={loading || !!reportBusy} onClick={() => confirmReport("jpg")}><FileImage size={18}/>{reportBusy === "jpg" ? "Creating JPG…" : "Generate JPG"}</button></div><small className="report-note"><Download size={14}/> Generated in your browser. Use the ready link to save it.</small>{reportLink && <a className="report-ready" href={reportLink.url} download={reportLink.filename}>Report ready: download {reportLink.filename} <ArrowRight size={15}/></a>}</div></section><CsvPanel entries={history} save={save}/><BackupPanel onRestored={load}/></TabsContent>
+        <TabsContent value="feedback" className="view-content"><Feedback/></TabsContent>
         <TabsContent value="settings" className="view-content"><Settings reload={load} data={planner} save={save} confirm={confirmChange} onAccount={onAccount} onSignOut={() => confirmChange({ title: "Sign out?", detail: "Your cloud records stay saved. The offline copy for this account will be removed from this browser.", confirmLabel: "Sign out", onConfirm: () => onSignOut?.() })}/></TabsContent>
-        <footer className="app-footer"><span>Developed by <strong>Victor Tarra &amp; Codex</strong></span><div><button type="button" onClick={startTour}>How to use</button><button type="button" onClick={() => setLegalTopic("privacy")}>Privacy · RA 10173</button><button type="button" onClick={() => setLegalTopic("terms")}>Terms &amp; conditions</button></div></footer>
+        <footer className="app-footer"><span>Developed by <strong>Victor Tarra &amp; Codex</strong></span><div><button type="button" onClick={startTour}>How to use</button><button type="button" onClick={() => go("feedback")}>Send feedback</button><button type="button" onClick={() => setLegalTopic("privacy")}>Privacy · RA 10173</button><button type="button" onClick={() => setLegalTopic("terms")}>Terms &amp; conditions</button></div></footer>
       </main></div>
     <nav className="bottom-nav" aria-label="Main navigation">{mobileViews.map((id, index) => { const item = navigation.find(link => link.id === id)!; const Icon = item.icon; return <div className="bottom-nav-slot" key={id}>{index === 2 && <button type="button" className="nav-add" aria-label="Add entry" onClick={() => openEntry("expense")}><span><Plus size={25}/></span><small>Add</small></button>}<button type="button" className={view === id ? "active" : ""} aria-current={view === id ? "page" : undefined} onClick={() => go(id)}><Icon size={21}/><span>{id === "overview" ? "Home" : item.label}</span></button></div>; })}</nav>
     {notice && <div className="save-status" role="status" aria-live="polite"><Check size={16}/> {notice}</div>}
