@@ -10,6 +10,7 @@ import "../app/dashboard.css";
 import "../app/screens.css";
 import "../app/typography.css";
 import "../app/layout.css";
+import "../app/polish.css";
 import { offlineStore } from "../app/offline-store";
 
 document.documentElement.dataset.theme = "light";

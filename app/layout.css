@@ -18,8 +18,7 @@
 /* Page frame */
 .content{max-width:1120px;margin:0 auto;padding:var(--sp-5) var(--sp-5) 56px}
 .app-top{height:64px;padding:0 var(--sp-5)}
-.sidebar{width:208px;padding:var(--sp-4) var(--sp-2)}
-.nav-caption{display:block}
+@media(min-width:1081px){.sidebar{width:208px;padding:var(--sp-4) var(--sp-2)}.nav-caption{display:block}}
 .page-heading{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--sp-3);margin-bottom:var(--sp-4)}
 .page-heading>div{min-width:0;flex:1 1 260px}
 .page-heading h1{font-size:var(--fs-2xl);line-height:var(--lh-2xl);letter-spacing:-.02em;margin:0;overflow-wrap:anywhere}

@@ -1,0 +1,37 @@
+/* Final polish: quote of the day, navigation feel, motion, small details. Loaded last. */
+
+/* Sidebar: keep the narrow icon rail on mid-size screens */
+@media(min-width:871px) and (max-width:1080px){
+  .sidebar{width:76px!important;padding:24px 10px!important}
+  .nav-caption,.sidebar-bottom .daily-quote{display:none!important}
+}
+
+/* Quote of the day */
+.daily-quote{margin:0;padding:var(--sp-3);border-radius:var(--radius-card);background:var(--ef-tint);color:var(--ef-ink)}
+.daily-quote-label{margin:0 0 var(--sp-2);font-size:var(--fs-label);line-height:var(--lh-label);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ef-primary)}
+.daily-quote blockquote{margin:0;font-family:var(--font-head);font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:500;overflow-wrap:anywhere}
+.daily-quote-by{margin:var(--sp-2) 0 0;font-size:var(--fs-label);line-height:var(--lh-label);color:var(--ef-muted)}
+.sidebar-bottom{padding:var(--sp-3) var(--sp-1) 0;border-top:0}
+/* Phone: the sidebar is hidden, so the quote sits at the top of the overview instead */
+.quote-mobile{display:none}
+@media(max-width:870px){.quote-mobile{display:block}}
+
+/* Navigation feel */
+.side-nav button{position:relative;transition:background-color .15s,color .15s}
+.side-nav button[data-state=active]::before{content:"";position:absolute;left:-8px;top:10px;bottom:10px;width:3px;border-radius:0 3px 3px 0;background:var(--ef-primary)}
+.bottom-nav button.active{font-weight:600}
+.bottom-nav{box-shadow:0 -4px 16px #10231c14}
+
+/* Cards and controls */
+.dash-card,.surface,.envelope,.goal-card,.split-record{transition:box-shadow .2s}
+.dash-card:hover,.surface:hover{box-shadow:var(--shadow-raised)}
+.primary-button,.outline-button,.light-button,.dash-stat{transition:background-color .15s,box-shadow .15s,transform .1s}
+.primary-button:active,.outline-button:active,.light-button:active{transform:translateY(1px)}
+.transaction,.bill-row{transition:background-color .15s}
+.transaction:hover{background:var(--ef-tint)}
+.dash-recent li,.dash-people li{padding:2px 0}
+.dash-card ul>li+li{padding-top:var(--sp-3);border-top:1px solid var(--ef-line)}
+.dash-cats ul>li+li,.dash-cats>li+li{border-top:0;padding-top:0}
+::selection{background:color-mix(in srgb,var(--ef-primary) 25%,white)}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.side-nav button,.dash-card,.surface{transition:none}}
