@@ -9,7 +9,7 @@ import "../app/wallet.css";
 import "../app/dashboard.css";
 import "../app/screens.css";
 import "../app/typography.css";
-import "../app/compact.css";
+import "../app/layout.css";
 import { offlineStore } from "../app/offline-store";
 
 document.documentElement.dataset.theme = "light";

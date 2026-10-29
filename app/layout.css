@@ -1,0 +1,87 @@
+/* Comfortable, readable layout for desktop and phone. Loaded last.
+   Rules: nothing sits on a background it wasn't designed for, text always has room to wrap,
+   tap targets are at least 44px, and fixed bars never cover content. */
+
+/* Neutral header on every screen (the old green overview band is gone, so text stays readable) */
+.app-main:has(.wallet-overview) .app-top{background:var(--ef-surface);border-color:var(--ef-line);color:var(--ef-ink)}
+.app-main:has(.wallet-overview) .app-top :is(.top-context,.top-status){color:var(--ef-muted)}
+.app-main:has(.wallet-overview) .app-top .avatar{background:var(--ef-tint);color:var(--ef-primary)}
+.app-main:has(.wallet-overview) .content{background:transparent}
+.app-main:has(.wallet-overview) .page-heading :is(h1,.heading-copy){color:var(--ef-ink)}
+.app-main:has(.wallet-overview) .page-heading .heading-copy{color:var(--ef-muted)}
+.app-main:has(.wallet-overview) .week-toolbar{background:var(--ef-surface);border-color:var(--ef-line);color:var(--ef-ink);box-shadow:var(--shadow-rest)}
+.app-main:has(.wallet-overview) .week-label small{color:var(--ef-muted)}
+.app-main:has(.wallet-overview) .week-label svg{color:var(--ef-primary)}
+.app-main:has(.wallet-overview) .week-controls button{background:var(--ef-surface);border-color:var(--ef-line);color:var(--ef-ink)}
+.app-main:has(.wallet-overview) .week-controls button:hover{background:var(--ef-tint)}
+
+/* Page frame */
+.content{max-width:1120px;margin:0 auto;padding:var(--sp-5) var(--sp-5) 56px}
+.app-top{height:64px;padding:0 var(--sp-5)}
+.sidebar{width:208px;padding:var(--sp-4) var(--sp-2)}
+.nav-caption{display:block}
+.page-heading{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--sp-3);margin-bottom:var(--sp-4)}
+.page-heading>div{min-width:0;flex:1 1 260px}
+.page-heading h1{font-size:var(--fs-2xl);line-height:var(--lh-2xl);letter-spacing:-.02em;margin:0;overflow-wrap:anywhere}
+.heading-copy{display:block;margin:var(--sp-1) 0 0;font-size:var(--fs-base);line-height:var(--lh-base);color:var(--ef-muted)}
+.heading-add{min-height:44px}
+.week-toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--sp-3);padding:var(--sp-2) var(--sp-3);margin-bottom:var(--sp-4)}
+.week-toolbar .week-label{min-width:0;flex:1 1 220px}
+.week-toolbar .week-label strong{font-size:var(--fs-base)}
+.week-controls{display:flex;gap:var(--sp-2)}
+.week-controls button{min-width:44px;min-height:44px}
+.view-content:not([hidden]){gap:var(--sp-4)}
+
+/* Overview */
+.dash{gap:var(--sp-4)}
+.dash-stats{gap:var(--sp-3)}
+.dash-stat{padding:var(--sp-3) var(--sp-3) var(--sp-3);gap:var(--sp-2)}
+.dash-stat-top{align-items:flex-start}
+.dash-stat-top .mini-label{min-width:0;overflow-wrap:anywhere}
+.dash-figure{font-size:var(--fs-xl);line-height:var(--lh-xl)}
+.dash-chip{width:32px;height:32px}
+.dash-actions{display:flex;flex-wrap:wrap;gap:var(--sp-3)}
+.dash-actions button{flex:1 1 150px;min-height:48px}
+.dash-grid{gap:var(--sp-3)}
+.dash-card,.surface,.planner-form,.split-form-card,.backup-panel,.settings-section{padding:var(--sp-3)}
+.dash-head{margin-bottom:var(--sp-3)}
+.dash-card ul{gap:var(--sp-3)}
+
+/* Text never collides with its neighbours */
+.dash-card li>div,.transaction-name,.bill-main,.borrower-head>div,.split-record-head>div{min-width:0}
+.dash-card li strong,.dash-card li small{white-space:normal;overflow-wrap:anywhere}
+.dash-card li strong{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.transaction-name strong,.transaction-name span{overflow-wrap:anywhere}
+.mini-label{overflow-wrap:anywhere}
+.settings-row{flex-wrap:wrap;gap:var(--sp-3)}
+.settings-row>div,.settings-row>label{flex:1 1 240px}
+
+@media(min-width:700px){
+  .dash-card{padding:var(--sp-4)}
+  .dash-stat{padding:var(--sp-4) var(--sp-3)}
+}
+@media(min-width:871px){
+  .dash-figure{font-size:var(--fs-xl)}
+}
+
+/* Phone: roomy touch targets, bottom bar never covers content */
+@media(max-width:870px){
+  .content{padding:var(--sp-3) var(--sp-3) 120px}
+  .app-top{height:60px;padding:0 var(--sp-3)}
+  .page-heading h1{font-size:var(--fs-xl);line-height:var(--lh-xl)}
+  .heading-copy{font-size:var(--fs-sm);line-height:var(--lh-sm)}
+  .bottom-nav button{min-height:56px!important;font-size:12px!important}
+  .save-status{bottom:96px}
+}
+@media(max-width:560px){
+  .dash-stats{grid-template-columns:1fr 1fr}
+  .dash-figure{font-size:20px;line-height:28px}
+  .dash-people li{grid-template-columns:40px minmax(0,1fr) auto}
+  .dash-people .dash-badge{grid-column:2;justify-self:start}
+}
+@media(max-width:380px){
+  .dash-stats{grid-template-columns:1fr}
+  .dash-actions button{flex-basis:100%}
+}
+.app-footer{padding:var(--sp-4) 0;margin-top:var(--sp-4);font-size:var(--fs-sm)}
+.empty-state{padding:var(--sp-5) var(--sp-3)}
