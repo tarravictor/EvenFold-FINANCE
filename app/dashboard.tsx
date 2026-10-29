@@ -1,5 +1,5 @@
-import { ArrowDownLeft, ArrowRight, ArrowUpRight, Bus, Coffee, GraduationCap, Plus, Receipt, ShoppingBasket, Tag, Target, Users, Utensils, Wallet, type LucideIcon } from "lucide-react";
-import { type Bill, dayLabel, type Entry, type Goal, money } from "./finance-utils";
+import { ArrowDownLeft, Download, ArrowRight, ArrowUpRight, Bus, Coffee, GraduationCap, Plus, Receipt, ShoppingBasket, Tag, Target, Users, Utensils, Wallet, type LucideIcon } from "lucide-react";
+import { dayLabel, type Entry, type Goal, money } from "./finance-utils";
 
 const categoryIcons: Record<string, LucideIcon> = { Food: Utensils, Coffee, Groceries: ShoppingBasket, Transport: Bus, School: GraduationCap, Bills: Receipt };
 export const CategoryIcon = ({ name, size = 18 }: { name: string; size?: number }) => { const Icon = categoryIcons[name] || Tag; return <Icon size={size} aria-hidden="true"/>; };
@@ -8,8 +8,8 @@ type Share = { share: { name: string; amountCents: number } };
 export type DashboardProps = {
   loading: boolean; spent: number; outstanding: number; budgetCents: number | null;
   goals: Goal[]; categories: [string, number][]; recent: Entry[];
-  loans: Entry[]; groupToCollect: Share[]; upcomingBills: Bill[]; overdueCount: number;
-  go: (view: "collect" | "goals" | "bills" | "insights" | "activity") => void;
+  loans: Entry[]; groupToCollect: Share[];
+  go: (view: "collect" | "goals" | "activity") => void; onExport: () => void;
   onAddExpense: () => void; onAddLoan: () => void; onAddGoal: () => void; onBudget: () => void;
 };
 
@@ -63,11 +63,12 @@ export function Dashboard(p: DashboardProps) {
     <div className="dash-actions">
       <button type="button" className="primary-button" onClick={p.onAddExpense}><ArrowUpRight size={18}/> Add expense</button>
       <button type="button" className="outline-button" onClick={p.onAddLoan}><ArrowDownLeft size={18}/> Money lent</button>
+      <button type="button" className="outline-button" onClick={p.onExport}><Download size={18}/> Export</button>
     </div>
 
     <div className="dash-grid">
       <section className="dash-card" aria-labelledby="dash-cat">
-        <Head kicker="This week" title="Spending breakdown" link="Insights" onLink={() => p.go("insights")}/>
+        <Head kicker="This week" title="Spending breakdown"/>
         {p.categories.length ? <ul className="dash-cats" id="dash-cat">{p.categories.slice(0, 6).map(([name, total], i) => <li key={name}>
           <span className={`dash-cat-icon tone-${i % 6}`}><CategoryIcon name={name}/></span>
           <div><div className="dash-cat-row"><span>{name}</span><b className="num">{money(total)}</b></div>
@@ -104,12 +105,6 @@ export function Dashboard(p: DashboardProps) {
           : <Empty title="Nothing recorded this week" hint="Add your first expense and it will appear here." action="Add expense" onAction={p.onAddExpense}/>}
       </section>
 
-      <section className="dash-card">
-        <Head kicker="Coming up" title="Bills" link="See bills" onLink={() => p.go("bills")}/>
-        {p.overdueCount > 0 && <p className="dash-alert">{p.overdueCount} {p.overdueCount === 1 ? "bill is" : "bills are"} overdue.</p>}
-        {p.upcomingBills.length ? <ul className="dash-recent">{p.upcomingBills.map(b => <li key={b.id}><span className="dash-cat-icon"><Receipt size={18} aria-hidden="true"/></span><div><strong>{b.name}</strong><small>Due {dayLabel(b.dueDate)}</small></div><b className="num">{money(b.amountCents)}</b></li>)}</ul>
-          : p.overdueCount === 0 && <div className="dash-empty"><strong>No bills due</strong><p>You're all caught up.</p></div>}
-      </section>
     </div>
   </div>;
 }

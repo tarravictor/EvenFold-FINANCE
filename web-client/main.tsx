@@ -9,10 +9,10 @@ import "../app/wallet.css";
 import "../app/dashboard.css";
 import "../app/screens.css";
 import "../app/typography.css";
+import "../app/compact.css";
 import { offlineStore } from "../app/offline-store";
-import { preference } from "../app/device-settings";
 
-document.documentElement.dataset.theme = preference("theme", "light");
+document.documentElement.dataset.theme = "light";
 window.addEventListener("beforeinstallprompt", event => { event.preventDefault(); (window as Window & { evenfoldInstall?: Event }).evenfoldInstall = event; });
 if (import.meta.env.PROD && "serviceWorker" in navigator) {
   window.addEventListener("load", () => { void navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch(() => {}); });

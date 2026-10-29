@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 
 const steps = [
   { selector: ".week-toolbar", title: "Pick a week", detail: "The Tuesday–Saturday dates move forward each week. Use the arrows to revisit another week." },
-  { selector: ".summary-grid", title: "See what matters", detail: "Track spending, money to collect, and the budget left for this week." },
-  { selector: ".quick-actions", title: "Record and split", detail: "Add an expense or loan, split a bill with friends, or export a report." },
-  { selector: ".bottom-nav, .side-nav", title: "Find every tool", detail: "Open Activity, To collect, Insights, and More for bills, goals, splits, and reports." },
+  { selector: ".dash-stats", title: "See what matters", detail: "Spending, money owed to you, active goals, and your net balance for this week." },
+  { selector: ".dash-actions", title: "Record and split", detail: "Add an expense, record money you lent, or export a report." },
+  { selector: ".bottom-nav, .side-nav", title: "Find every tool", detail: "Activity, To collect, Split bills, Goals, Reports, and Settings are always one tap away." },
 ];
 
 export function Onboarding({ open, onClose }: { open: boolean; onClose: () => void }) {
