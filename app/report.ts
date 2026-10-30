@@ -13,10 +13,13 @@ const MAX_PIXELS = 14_000_000;
 const MAX_ROWS = 3000;
 
 type Style = { size?: number; weight?: number; color?: string; align?: "left" | "right"; max?: number; shrink?: boolean };
-type Op = ({ t: "text"; x: number; y: number; s: string } & Style) | { t: "rect"; x: number; y: number; w: number; h: number; fill: string; r?: number } | { t: "line"; x1: number; y1: number; x2: number; y2: number; color: string };
+type Op = LogoOp | ({ t: "text"; x: number; y: number; s: string } & Style) | { t: "rect"; x: number; y: number; w: number; h: number; fill: string; r?: number } | { t: "line"; x1: number; y1: number; x2: number; y2: number; color: string };
+type LogoOp = { t: "logo"; x: number; y: number; w: number };
 type Block = { h: number; ops: Op[] };
 
 const text = (s: string, x: number, y: number, o: Style = {}): Op => ({ t: "text", s, x, y, ...o });
+const logo = (x: number, y: number, w: number): Op => ({ t: "logo", x, y, w });
+const LOGO = { bg: "#0f766e", mark: "#e7f2ec", gold: "#eab954", bars: [[48, 40, 96, 28], [48, 40, 32, 122], [48, 88, 84, 26], [48, 134, 96, 28]], tri: [[116, 40], [144, 68], [144, 40]] } as const;
 const rect = (x: number, y: number, w: number, h: number, fill: string, r?: number): Op => ({ t: "rect", x, y, w, h, fill, r });
 const line = (y: number, color = C.line): Op => ({ t: "line", x1: 0, y1: y, x2: WIDTH, y2: y, color });
 const shift = (ops: Op[], dy: number): Op[] => ops.map(op => op.t === "line" ? { ...op, y1: op.y1 + dy, y2: op.y2 + dy } : { ...op, y: op.y + dy });
@@ -85,7 +88,7 @@ function build(data: Report) {
   ];
 
   const header: Block = { h: 232, ops: [
-    rect(0, 0, 60, 60, C.primary, 14), text("E", 30, 44, { size: 38, weight: 800, color: C.white, align: "right" }),
+    logo(0, 0, 60),
     text("EvenFold Finance", 80, 28, { size: 25, weight: 800, color: C.ink }), text(`${kindName} report`, 80, 54, { size: 18, color: C.muted }),
     text(`Generated ${generated}`, WIDTH, 28, { size: 17, color: C.muted, align: "right" }),
     text(periodName, 0, 142, { size: 50, weight: 800, color: C.ink, max: WIDTH }),
@@ -135,7 +138,14 @@ async function toJpg(blocks: Block[]): Promise<Blob> {
   let y = pad;
   for (const block of blocks) {
     for (const op of block.ops) {
-      if (op.t === "rect") {
+      if (op.t === "logo") {
+        const k = op.w / 192, ox = pad + op.x, oy = y + op.y;
+        ctx.fillStyle = LOGO.bg; ctx.beginPath();
+        if (typeof ctx.roundRect === "function") ctx.roundRect(ox, oy, op.w, op.w, 36 * k); else ctx.rect(ox, oy, op.w, op.w);
+        ctx.fill();
+        ctx.fillStyle = LOGO.mark; for (const [bx, by, bw, bh] of LOGO.bars) ctx.fillRect(ox + bx * k, oy + by * k, bw * k, bh * k);
+        ctx.fillStyle = LOGO.gold; ctx.beginPath(); LOGO.tri.forEach(([tx, ty], i) => i ? ctx.lineTo(ox + tx * k, oy + ty * k) : ctx.moveTo(ox + tx * k, oy + ty * k)); ctx.closePath(); ctx.fill();
+      } else if (op.t === "rect") {
         ctx.fillStyle = op.fill; ctx.beginPath();
         if (op.r && typeof ctx.roundRect === "function") ctx.roundRect(pad + op.x, y + op.y, op.w, op.h, op.r); else ctx.rect(pad + op.x, y + op.y, op.w, op.h);
         ctx.fill();
@@ -172,7 +182,12 @@ async function toPdf(blocks: Block[], periodName: string, generated: string): Pr
   };
   const drawOps = (ops: Op[], offsetY: number) => {
     for (const op of ops) {
-      if (op.t === "rect") {
+      if (op.t === "logo") {
+        const k = op.w / 192 * u, ox = marginX + op.x * u, oy = top + (offsetY + op.y) * u, size = op.w * u;
+        pdf.setFillColor(LOGO.bg); pdf.roundedRect(ox, oy, size, size, 36 * k, 36 * k, "F");
+        pdf.setFillColor(LOGO.mark); for (const [bx, by, bw, bh] of LOGO.bars) pdf.rect(ox + bx * k, oy + by * k, bw * k, bh * k, "F");
+        pdf.setFillColor(LOGO.gold); const [a, b, c] = LOGO.tri; pdf.triangle(ox + a[0] * k, oy + a[1] * k, ox + b[0] * k, oy + b[1] * k, ox + c[0] * k, oy + c[1] * k, "F");
+      } else if (op.t === "rect") {
         pdf.setFillColor(hex(op.fill));
         if (op.r) pdf.roundedRect(marginX + op.x * u, top + (offsetY + op.y) * u, op.w * u, op.h * u, op.r * u, op.r * u, "F");
         else pdf.rect(marginX + op.x * u, top + (offsetY + op.y) * u, op.w * u, op.h * u, "F");

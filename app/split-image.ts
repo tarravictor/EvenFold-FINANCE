@@ -17,6 +17,13 @@ function short(ctx: CanvasRenderingContext2D, value: string, maxWidth: number) {
 }
 
 // ctx.roundRect is missing on older iOS/Safari; fall back to arcs.
+function drawLogo(ctx: CanvasRenderingContext2D, x: number, y: number, size: number) {
+  const k = size / 192, at = (px: number, py: number): [number, number] => [x + px * k, y + py * k];
+  ctx.fillStyle = "#0f766e"; round(ctx, x, y, size, size, 36 * k); ctx.fill();
+  ctx.fillStyle = "#e7f2ec";
+  for (const [bx, by, bw, bh] of [[48, 40, 96, 28], [48, 40, 32, 122], [48, 88, 84, 26], [48, 134, 96, 28]]) ctx.fillRect(x + bx * k, y + by * k, bw * k, bh * k);
+  ctx.fillStyle = "#eab954"; ctx.beginPath(); ctx.moveTo(...at(116, 40)); ctx.lineTo(...at(144, 68)); ctx.lineTo(...at(144, 40)); ctx.closePath(); ctx.fill();
+}
 function round(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   ctx.beginPath();
   if (typeof ctx.roundRect === "function") { ctx.roundRect(x, y, w, h, r); return; }
@@ -81,8 +88,7 @@ export async function makeSplitImage(split: GroupSplit, qr?: File): Promise<Blob
   ctx.fillStyle = "#f5f8f5"; ctx.fillRect(0, 0, width, height);
   ctx.fillStyle = "#173f39"; ctx.fillRect(0, 0, width, 26);
   ctx.fillStyle = "#fff"; round(ctx, 56, 62, 1088, height - 125, 30); ctx.fill();
-  ctx.fillStyle = "#d8f2b2"; round(ctx, 94, 102, 66, 66, 17); ctx.fill();
-  text(ctx, "E", 114, 149, 40, 800, "#173f39");
+  drawLogo(ctx, 94, 102, 66);
   text(ctx, "EVENFOLD FINANCE  /  GROUP SPLIT", 183, 127, 19, 800, "#3e7558");
   text(ctx, dayLabel(split.date, { month: "long", day: "numeric", year: "numeric" }), 183, 158, 18, 400, "#58706f");
   ctx.font = `800 44px ${FONT}`;
