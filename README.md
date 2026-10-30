@@ -6,6 +6,25 @@ EvenFold FINANCE is a simple personal finance tracker designed to help you under
 
 ---
 
+## Screenshots
+
+<p align="center">
+  <img src="docs/appstore/evenfold-appstore.png" alt="EvenFold FINANCE app screenshots: weekly overview, spending breakdown, money to collect and split bills" width="100%">
+</p>
+
+<table>
+  <tr>
+    <td><img src="docs/appstore/1-overview.png" alt="Weekly overview" width="220"></td>
+    <td><img src="docs/appstore/2-spending.png" alt="Spending breakdown" width="220"></td>
+    <td><img src="docs/appstore/3-collect.png" alt="Money to collect" width="220"></td>
+    <td><img src="docs/appstore/4-splits.png" alt="Split bills" width="220"></td>
+  </tr>
+</table>
+
+*Screenshots use sample demo data.*
+
+---
+
 ## Access EvenFold FINANCE
 
 ### [Open EvenFold FINANCE →](https://tarravictor.github.io/EvenFold-FINANCE/)
