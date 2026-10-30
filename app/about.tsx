@@ -6,11 +6,12 @@ export function About() {
   return (
     <section className="about-card" aria-labelledby="about-title">
       <div className="about-glow" aria-hidden="true" />
+      <div className="about-brand"><img src={`${import.meta.env.BASE_URL}app-icon.svg`} alt="EvenFold Finance logo" width={56} height={56}/><span><b>EvenFold</b><small>FINANCE</small></span></div>
       <span className="about-kicker"><Sparkles size={14} aria-hidden="true" /> ABOUT EVENFOLD FINANCE</span>
       <blockquote className="about-quote">
         <Quote size={28} aria-hidden="true" />
-        <p id="about-title">Managing your finances doesn’t need to be hard. It just needs an app on your phone.</p>
-        <footer>— Victor Tarra, creator</footer>
+        <p id="about-title">Your money. Your moves. Your control. Make every peso count.</p>
+        <footer>— Victor Tarra, Creator</footer>
       </blockquote>
       <p className="about-text">EvenFold FINANCE is a simple, private money tracker for everyday life. Log expenses and loans, split bills with friends, set savings goals, and export clean reports, all from your phone or desktop, even offline.</p>
       <div className="about-grid">
