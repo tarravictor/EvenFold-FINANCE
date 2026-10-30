@@ -129,3 +129,4 @@ html{scroll-behavior:smooth;scroll-padding-top:80px}
 .about-stack li{padding:3px 10px;border-radius:999px;border:1px solid var(--ef-line);font-size:12px;font-weight:600;background:var(--ef-bg)}
 .about-stack li.is-ai{background:var(--ef-primary);border-color:var(--ef-primary);color:#fff}
 .about-copy{margin:12px 0 0;font-size:12px;color:var(--ef-muted)}
+.mobile-brand .logo-img{width:36px;height:36px;border-radius:10px;flex:none;display:block}
