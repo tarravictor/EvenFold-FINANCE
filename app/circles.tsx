@@ -33,6 +33,13 @@ function MemberRow({ member, you }: { member: Member; you: boolean }) {
   </li>;
 }
 
+// Flip to false to turn friend circles on (the database migration must be applied first).
+export const friendsComingSoon = true;
+
+export function CirclesComingSoon() {
+  return <div className="empty-state circles-soon"><span className="empty-icon"><Users size={23}/></span><strong>Friends is coming soon</strong><p>We're putting the finishing touches on friend circles. You'll be able to invite friends with a code or link and see each other's progress. Check back soon.</p></div>;
+}
+
 export function Circles({ userId, displayName, inviteCode, mine, active, onConfirm, onNotice }: Props) {
   const [circles, setCircles] = useState<Circle[]>([]);
   const [loading, setLoading] = useState(true);
