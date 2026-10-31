@@ -1,0 +1,29 @@
+/* Friend circles. Reuses dashboard tokens; motion is limited to the shared meter transition and one entrance. */
+.circles{display:grid;gap:var(--sp-4);max-width:880px}
+.circles h2{margin:0;font-size:var(--fs-lg,18px);line-height:1.3}
+.circles .dash-card{padding:var(--sp-3)}
+.circle-privacy p,.circle-head p,.circle-quiet{margin:var(--sp-1) 0 0;color:var(--ef-muted)}
+.circle-toggles{display:grid;gap:var(--sp-2);margin-top:var(--sp-3)}
+.circle-toggles label{display:flex;align-items:center;gap:var(--sp-2);min-height:44px}
+.circle-toggles input{width:20px;height:20px;accent-color:var(--ef-primary)}
+.circle-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:var(--sp-2)}
+.circle-actions{display:flex;flex-wrap:wrap;gap:var(--sp-2)}
+.circle-code{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp-2);margin:var(--sp-3) 0;padding:var(--sp-2) var(--sp-3);border-radius:var(--radius-control);background:var(--ef-tint)}
+.circle-code span{color:var(--ef-muted)}
+.circle-code code{font-size:18px;font-weight:700;letter-spacing:.12em;color:var(--ef-ink);user-select:all}
+.circle-members{list-style:none;margin:0;padding:0;display:grid;gap:var(--sp-3)}
+.circle-member{display:flex;gap:var(--sp-3);min-width:0}
+.circle-member+.circle-member{padding-top:var(--sp-3);border-top:1px solid var(--ef-line)}
+.circle-avatar{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--ef-tint);color:var(--ef-primary);font-weight:700}
+.circle-member-body{min-width:0;display:grid;gap:var(--sp-1)}
+.circle-member-body strong{overflow-wrap:anywhere}
+.circle-member-body p{margin:0}
+.circle-line{display:grid;gap:var(--sp-1)}
+.circle-line .dash-meter{display:block}
+.circle-time{color:var(--ef-muted)}
+.circle-forms{display:grid;gap:var(--sp-3);grid-template-columns:repeat(2,minmax(0,1fr))}
+.circle-nick{grid-column:1/-1;display:grid;gap:var(--sp-1);max-width:320px}
+.circle-card{animation:ef-pop .22s cubic-bezier(.23,1,.32,1) both}
+.heading-friends{display:none}
+@media(max-width:870px){.circle-forms{grid-template-columns:1fr}.heading-friends{display:inline-flex}}
+@media(prefers-reduced-motion:reduce){.circle-card{animation:none}}
