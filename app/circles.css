@@ -27,3 +27,11 @@
 .heading-friends{display:none}
 @media(max-width:870px){.circle-forms{grid-template-columns:1fr}.heading-friends{display:inline-flex}}
 @media(prefers-reduced-motion:reduce){.circle-card{animation:none}}
+/* Center "Add" button in the mobile nav shows the app logo instead of a plus. */
+.bottom-nav .nav-add>span{width:48px;height:48px;background:none;box-shadow:0 6px 15px #116b5248}
+.bottom-nav .nav-add>span img{display:block;width:48px;height:48px;border-radius:15px}
+.bottom-nav .nav-add{display:flex!important;flex-direction:column;align-items:center!important;justify-content:center!important;text-align:center}
+.bottom-nav .nav-add:active:not(:disabled){transform:none;filter:none;background:none!important}
+.bottom-nav .nav-add>span{display:grid;place-items:center;margin:0 auto;transition:transform .12s ease-out}
+.bottom-nav .nav-add:active>span{transform:scale(.94)}
+@media(prefers-reduced-motion:reduce){.bottom-nav .nav-add>span{transition:none}.bottom-nav .nav-add:active>span{transform:none}}
