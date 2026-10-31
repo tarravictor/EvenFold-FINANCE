@@ -236,7 +236,7 @@ export default function Home({ accountName = "there", accountEmail, onAccount, o
     catch (cause) { setError(cause instanceof Error ? cause.message : "Could not generate report."); }
     finally { setReportBusy(null); }
   }
-  const go = (next: View) => { setView(next); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  const go = (next: View) => { setView(next); window.scrollTo({ top: 0 }); };
   const startTour = () => { setView("overview"); window.scrollTo({ top: 0, behavior: "smooth" }); window.setTimeout(() => setTourOpen(true), 180); };
   useEffect(() => { if (!notice) return; const timer = setTimeout(() => setNotice(""), 2600); return () => clearTimeout(timer); }, [notice]);
   // Routine, reversible saves run straight away (the user already pressed a submit button); only deletes, sign-out and report generation ask again.
